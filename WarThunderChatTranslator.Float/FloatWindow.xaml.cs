@@ -274,9 +274,18 @@ namespace WarThunderChatTranslator.FloatWindow
         /// </summary>
         public void ClearMessages()
         {
-            _displayTimer.Stop();
             _userScrolledUp = false;
             MessageList.ItemsSource = null;
+            if (_pinned)
+            {
+                _displayTimer.Stop();
+            }
+            else
+            {
+                // 非固定模式：重启显示计时，"等待消息…"占位也按显示时长自动淡出
+                // （修复：之前无条件停表，退出对局后浮窗会一直挂着不消失）
+                RestartDisplayTimer();
+            }
             if (IsVisible)
             {
                 Placeholder.Visibility = Visibility.Visible;
