@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -20,6 +21,7 @@ namespace WarThunderChatTranslator.Pages
         public Brush AllyPreviewBrush { get; set; }
         public Brush EnemyPreviewBrush { get; set; }
         public Brush SystemPreviewBrush { get; set; }
+        public Brush OutlinePreviewBrush { get; set; }
 
         public List<Tuple<string, FontFamily>> Fonts { get; set; }
 
@@ -28,6 +30,10 @@ namespace WarThunderChatTranslator.Pages
             InitializeComponent();
             InitializeFontColors();
             LoadFontFamilies();
+
+            // lambda 接线（WinAppSDK 1.5 中 Slider/ToggleSwitch 事件参数类型不便显式引用）
+            OutlineToggle.Toggled += (s, e) => OnOutlineToggled();
+            OutlineWidthSlider.ValueChanged += (s, e) => OnOutlineWidthChanged();
         }
 
         private void InitializeFontColors()
@@ -35,6 +41,7 @@ namespace WarThunderChatTranslator.Pages
             AllyPreviewBrush = new SolidColorBrush(GetFontColor("AllyFontColor"));
             EnemyPreviewBrush = new SolidColorBrush(GetFontColor("EnemyFontColor"));
             SystemPreviewBrush = new SolidColorBrush(GetFontColor("SystemFontColor"));
+            OutlinePreviewBrush = new SolidColorBrush(GetFontColor("FloatWindow_OutlineColor"));
         }
 
         private Color GetFontColor(string settingKey)
@@ -47,6 +54,38 @@ namespace WarThunderChatTranslator.Pages
         {
             FontSizePanel.Value = double.Parse(ApplicationConfig.GetSettings("FontSize"));
             FontStylePanel.SelectedIndex = GetFontStyleIndex(ApplicationConfig.GetSettings("FontStyle"));
+            OutlineToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Outline"));
+            OutlineWidthSlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_OutlineWidth"), 1);
+            OutlineWidthValue.Text = $"{OutlineWidthSlider.Value:0.0} 像素";
+        }
+
+        private void OnOutlineToggled()
+        {
+            ApplicationConfig.SaveSettings("FloatWindow_Outline",
+                OutlineToggle.IsOn ? "true" : "false");
+            WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
+        }
+
+        private void OnOutlineWidthChanged()
+        {
+            OutlineWidthValue.Text = $"{OutlineWidthSlider.Value:0.0} 像素";
+            ApplicationConfig.SaveSettings("FloatWindow_OutlineWidth",
+                OutlineWidthSlider.Value.ToString("0.0", CultureInfo.InvariantCulture));
+            WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
+        }
+
+        private static bool ParseBool(string value)
+        {
+            return bool.TryParse(value, out bool b) && b;
+        }
+
+        private static double ParseDouble(string value, double fallback)
+        {
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0)
+            {
+                return v;
+            }
+            return fallback;
         }
 
         private int GetFontStyleIndex(string fontStyle)
@@ -119,6 +158,8 @@ namespace WarThunderChatTranslator.Pages
                 ApplicationConfig.SaveSettings(settingKey, FontColor.ToString());
                 previewBrush = new SolidColorBrush(FontColor);
                 colorPreview.Fill = previewBrush;
+                // 颜色变化：浮窗文字颜色/描边颜色实时同步
+                WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
             }
         }
 
@@ -138,6 +179,12 @@ namespace WarThunderChatTranslator.Pages
         {
             OnColorButtonClick("SystemFontColor", SystemPreviewBrush, SystemColorPreview);
             SystemPreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
+        }
+
+        private void Outline_Button_Click(object sender, RoutedEventArgs e)
+        {
+            OnColorButtonClick("FloatWindow_OutlineColor", OutlinePreviewBrush, OutlineColorPreview);
+            OutlinePreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
         }
 
     }

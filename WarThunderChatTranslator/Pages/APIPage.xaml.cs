@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using WarThunderChatTranslator.Configurations;
 using WarThunderChatTranslator.Dialogs;
 using WarThunderChatTranslator.Helpers;
@@ -30,6 +31,7 @@ namespace WarThunderChatTranslator.Pages
             InitializeAPIPanel(selectedAPI);
             LoadLanguages();
             UpdateLanguageSupport(selectedAPI);
+            LoadCustomAIFields();
             _loaded = true;
         }
 
@@ -40,8 +42,47 @@ namespace WarThunderChatTranslator.Pages
                 "Yandex" => 1,
                 "Bing" => 2,
                 "Google" => 3,
+                "CustomAI" => 4,
                 _ => 0
             };
+        }
+
+        private void LoadCustomAIFields()
+        {
+            CustomAI_BaseUrl.Text = ApplicationConfig.GetSettings("CustomAI_BaseUrl") ?? "";
+            CustomAI_ApiKey.Text = ApplicationConfig.GetSettings("CustomAI_ApiKey") ?? "";
+            CustomAI_Model.Text = ApplicationConfig.GetSettings("CustomAI_Model") ?? "";
+            CustomAI_Endpoint.Text = ApplicationConfig.GetSettings("CustomAI_Endpoint") ?? "/chat/completions";
+            CustomAI_SystemPrompt.Text = ApplicationConfig.GetSettings("CustomAI_SystemPrompt") ?? "";
+        }
+
+        private bool CustomAIConfigValid(out string missing)
+        {
+            missing = "";
+            if (string.IsNullOrWhiteSpace(CustomAI_BaseUrl.Text))
+            {
+                missing = "APIåœ°å€";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(CustomAI_Model.Text))
+            {
+                missing = "æ¨¡å‹";
+                return false;
+            }
+            return true;
+        }
+
+        private void SaveAndRebuildCustomAI()
+        {
+            if (!_loaded || ApplicationConfig.GetSettings("TranslateAPI") != "CustomAI") return;
+            try
+            {
+                TranslationHelper.UpdateTranslator();
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"è‡ªå®šä¹‰AIé…ç½®æœªç”Ÿæ•ˆï¼Œä¿ç•™ä¸Šä¸€å¯ç”¨ç¿»è¯‘å™¨ï¼š{ex.Message}");
+            }
         }
 
         private void LoadLanguages()
@@ -69,6 +110,11 @@ namespace WarThunderChatTranslator.Pages
             if (string.IsNullOrEmpty(selectedTag)) return;
 
             ApplicationConfig.SaveSettings("TranslateAPI", selectedTag);
+            if (selectedTag == "CustomAI" && !CustomAIConfigValid(out string missing))
+            {
+                ShowToastNotification("è‡ªå®šä¹‰AIå°šæœªé…ç½®å®Œæˆ", $"è¯·å¡«å†™{missing}åï¼Œå†ç‚¹å‡»ä¸€æ¬¡è¯¥é€‰é¡¹æˆ–æµ‹è¯•ç¿»è¯‘åŠŸèƒ½");
+                return;
+            }
             TranslationHelper.UpdateTranslator();
             UpdateLanguageSupport(selectedTag);
         }
@@ -100,26 +146,30 @@ namespace WarThunderChatTranslator.Pages
             };
             var result = await inputDialog.ShowAsync();
 
-            if (result == ContentDialogResult.Primary)
+            if (result != ContentDialogResult.Primary)
             {
-                Checking.Visibility = Visibility.Visible;
-                await HandleTranslationTest(inputDialog.text);
-                Checking.Visibility = Visibility.Collapsed;
+                return;
             }
-        }
 
-        private async Task HandleTranslationTest(string text)
-        {
+            Checking.Visibility = Visibility.Visible;
+            TestResult.Visibility = Visibility.Visible;
+            TestResult.ClearValue(TextBlock.ForegroundProperty);
+            TestResult.Text = "ç¿»è¯‘ä¸­ï¼Œè¯·ç¨å€™â€¦";
             try
             {
-                var translationResult = await TranslationHelper.TranslateAsync(text);
-                ShowToastNotification("·­Òë³É¹¦£¡", $"·­Òë½á¹û£º{translationResult.Translation}", $"µ÷ÓÃ·­ÒëÆ÷£º{translationResult.Service}");
-                _logger.Debug($"·­Òë²âÊÔ³É¹¦£¡·­ÒëÆ÷£º{translationResult.Service}, ·­ÒëÄÚÈİ£º{translationResult.Source}, ·­Òë½á¹û£º{translationResult.Translation}");
+                var translationResult = await TranslationHelper.TranslateAsync(inputDialog.text);
+                TestResult.Text = $"ç¿»è¯‘ç»“æœï¼š{translationResult.Translation}ï¼ˆè°ƒç”¨ç¿»è¯‘å™¨ï¼š{translationResult.Service}ï¼‰";
+                _logger.Debug($"ç¿»è¯‘æµ‹è¯•æˆåŠŸï¼ç¿»è¯‘å™¨ï¼š{translationResult.Service}, ç¿»è¯‘å†…å®¹ï¼š{translationResult.Source}, ç¿»è¯‘ç»“æœï¼š{translationResult.Translation}");
             }
             catch (Exception ex)
             {
-                ShowToastNotification("·­ÒëÊ§°Ü£¡", ex.Message);
-                _logger.Debug($"·­Òë²âÊÔÊ§°Ü£¡·­ÒëÆ÷£º{TranslationHelper.getCurrentTranslator().Name}, ·­ÒëÄÚÈİ£º{text}, ´íÎó£º{ex.Message}");
+                TestResult.Foreground = (Brush)Application.Current.Resources["SystemErrorTextColor"];
+                TestResult.Text = $"ç¿»è¯‘å¤±è´¥ï¼š{ex.Message}";
+                _logger.Debug($"ç¿»è¯‘æµ‹è¯•å¤±è´¥ï¼ç¿»è¯‘å™¨ï¼š{TranslationHelper.getCurrentTranslator().Name}, ç¿»è¯‘å†…å®¹ï¼š{inputDialog.text}, é”™è¯¯ï¼š{ex.Message}");
+            }
+            finally
+            {
+                Checking.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -136,7 +186,7 @@ namespace WarThunderChatTranslator.Pages
             }
 
             var toast = new ToastNotification(toastXml);
-            ToastNotificationManager.CreateToastNotifier("WarThunderChatTranslator").Show(toast);
+            ToastNotificationManager.CreateToastNotifier().Show(toast);
         }
 
         private void Bing_Token_TextChanged(object sender, TextChangedEventArgs e)
@@ -147,12 +197,47 @@ namespace WarThunderChatTranslator.Pages
             }
         }
 
+        private void CustomAI_BaseUrl_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_loaded) return;
+            ApplicationConfig.SaveSettings("CustomAI_BaseUrl", ((TextBox)sender).Text);
+            SaveAndRebuildCustomAI();
+        }
+
+        private void CustomAI_ApiKey_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_loaded) return;
+            ApplicationConfig.SaveSettings("CustomAI_ApiKey", ((TextBox)sender).Text);
+            SaveAndRebuildCustomAI();
+        }
+
+        private void CustomAI_Model_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_loaded) return;
+            ApplicationConfig.SaveSettings("CustomAI_Model", ((TextBox)sender).Text);
+            SaveAndRebuildCustomAI();
+        }
+
+        private void CustomAI_Endpoint_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_loaded) return;
+            ApplicationConfig.SaveSettings("CustomAI_Endpoint", ((TextBox)sender).Text);
+            SaveAndRebuildCustomAI();
+        }
+
+        private void CustomAI_SystemPrompt_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_loaded) return;
+            ApplicationConfig.SaveSettings("CustomAI_SystemPrompt", ((TextBox)sender).Text);
+            SaveAndRebuildCustomAI();
+        }
+
         private void TargetLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_loaded && TargetLanguage.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Language selectedLanguage)
             {
                 ApplicationConfig.SaveSettings("TargetLanguage", selectedLanguage.ISO6391);
-                _logger.Debug($"ÉèÖÃÄ¿±êÓïÑÔÎª{selectedLanguage.ISO6391}");
+                _logger.Debug($"è®¾ç½®ç›®æ ‡è¯­è¨€ä¸º{selectedLanguage.ISO6391}");
             }
         }
     }

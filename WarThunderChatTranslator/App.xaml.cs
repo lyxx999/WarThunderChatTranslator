@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using System;
 using System.IO;
 using WarThunderChatTranslator.Configurations;
@@ -21,6 +21,7 @@ using NLog;
 using System.Text.RegularExpressions;
 using WarThunderChatTranslator.Pages;
 using WarThunderChatTranslator.Helpers;
+using WarThunderChatTranslator.FloatWindow;
 using Microsoft.UI.Xaml.Input;
 using WinUICommunity;
 using System.Threading; // 引入命名空间
@@ -36,9 +37,7 @@ namespace WarThunderChatTranslator
         public TaskbarIcon TrayIcon { get; private set; }
         private static readonly string url = IsAdmin() ? "http://+:8100/" : "http://localhost:8100/";
         private HttpListener _httpListener;
-        private Dictionary<int, string> translationCache = new Dictionary<int, string>();
-        private static readonly int currentPort = 8111;
-        private static readonly string COLOR_PATTERN = @"<color(.*?)>(.*?)<\/color>";
+        private FloatWindowController _floatController;
 
         private static Mutex mutex; // 定义静态 Mutex 变量
 
@@ -53,7 +52,7 @@ namespace WarThunderChatTranslator
                 var toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText01);
                 toastXml.GetElementsByTagName("text")[0].AppendChild(toastXml.CreateTextNode("WarThunderChatTranslator 已在运行，请勿开启新实例。"));
                 var toast = new ToastNotification(toastXml);
-                ToastNotificationManager.CreateToastNotifier("WarThunderChatTranslator").Show(toast);
+                ToastNotificationManager.CreateToastNotifier().Show(toast);
                 Environment.Exit(0);
                 return;
             }
@@ -65,8 +64,22 @@ namespace WarThunderChatTranslator
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             InitializeAppSettings();
+            InitializeFloatWindow();
             InitializeTrayIcon();
             StartHttpServer();
+        }
+
+        private void InitializeFloatWindow()
+        {
+            try
+            {
+                _floatController = new FloatWindowController();
+                _floatController.Init();
+            }
+            catch (Exception ex)
+            {
+                logger?.Error($"初始化浮窗失败: {ex}");
+            }
         }
 
         private void InitializeLogging()
@@ -102,6 +115,24 @@ namespace WarThunderChatTranslator
                 { "SystemFontColor", "#FF856404" },
                 { "Theme", "Default" },
                 { "BackgroundCSS", "background-color: #f4f4f4;" },
+                { "CustomAI_BaseUrl", "" },
+                { "CustomAI_ApiKey", "" },
+                { "CustomAI_Model", "" },
+                { "CustomAI_Endpoint", "/chat/completions" },
+                { "CustomAI_SystemPrompt", "" },
+                { "FloatWindow_Enabled", "false" },
+                { "FloatWindow_DisplayDuration", "3" },
+                { "FloatWindow_FadeSpeed", "0.5" },
+                { "FloatWindow_Opacity", "85" },
+                { "FloatWindow_ShowOriginal", "false" },
+                { "FloatWindow_Pinned", "false" },
+                { "FloatWindow_Position", "" },
+                { "FloatWindow_Size", "" },
+                { "FloatWindow_Outline", "false" },
+                { "FloatWindow_OutlineColor", "#FFFFFFFF" },
+                { "FloatWindow_OutlineWidth", "1" },
+                { "FloatWindow_ClearMode", "exit" },
+                { "FloatWindow_TogglePinByEnter", "true" },
             };
 
             foreach (var setting in defaultSettings)
@@ -119,6 +150,17 @@ namespace WarThunderChatTranslator
 
         private void InitializeTrayIcon()
         {
+            var floatWindowCommand = (XamlUICommand)Resources["FloatWindowCommand"];
+            floatWindowCommand.ExecuteRequested += (sender, args) =>
+            {
+                if (_floatController == null)
+                {
+                    return;
+                }
+                _floatController.SetEnabled(!_floatController.Enabled);
+                UpdateFloatWindowMenuItem(_floatController.Enabled);
+            };
+
             var OpenDashboardCommand = (XamlUICommand)Resources["OpenDashboardCommand"];
             OpenDashboardCommand.ExecuteRequested += (sender, args) => Windows.System.Launcher.LaunchUriAsync(new System.Uri("http://localhost:8100"));
 
@@ -131,7 +173,30 @@ namespace WarThunderChatTranslator
             TrayIcon = (TaskbarIcon)Resources["TrayIcon"];
             TrayIcon.ForceCreate();
 
+            UpdateFloatWindowMenuItem(_floatController != null && _floatController.Enabled);
+
             CoreApplication.Exiting += (sender, e) => ExitApplication();
+        }
+
+        private void UpdateFloatWindowMenuItem(bool isOn)
+        {
+            if (TrayIcon?.ContextFlyout is Microsoft.UI.Xaml.Controls.MenuFlyout flyout)
+            {
+                foreach (var item in flyout.Items)
+                {
+                    if (item is Microsoft.UI.Xaml.Controls.MenuFlyoutItem mfi && Equals(mfi.Tag, "FloatWindow"))
+                    {
+                        // WinUI 的 MenuFlyoutItem 没有 IsChecked：用图标切换表示状态
+                        mfi.Icon = isOn
+                            ? new Microsoft.UI.Xaml.Controls.FontIcon
+                            {
+                                Glyph = "\uE73E", // Segoe Fluent Icons: CheckMark
+                                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets")
+                            }
+                            : new Microsoft.UI.Xaml.Controls.SymbolIcon { Symbol = Microsoft.UI.Xaml.Controls.Symbol.View };
+                    }
+                }
+            }
         }
 
         private void ToggleMainWindowVisibility(XamlUICommand sender, ExecuteRequestedEventArgs args)
@@ -273,7 +338,7 @@ namespace WarThunderChatTranslator
             var toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText01);
             toastXml.GetElementsByTagName("text")[0].AppendChild(toastXml.CreateTextNode(ex.Message + ex.StackTrace));
             var toast = new ToastNotification(toastXml);
-            ToastNotificationManager.CreateToastNotifier("WarThunderChatTranslator").Show(toast);
+            ToastNotificationManager.CreateToastNotifier().Show(toast);
         }
 
         private async void StartHttpServer()
@@ -296,7 +361,7 @@ namespace WarThunderChatTranslator
                 var toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText01);
                 toastXml.GetElementsByTagName("text")[0].AppendChild(toastXml.CreateTextNode("8100端口被其他端口占用，请检查端口占用后再打开应用！"));
                 var toast = new ToastNotification(toastXml);
-                ToastNotificationManager.CreateToastNotifier("WarThunderChatTranslator").Show(toast);
+                ToastNotificationManager.CreateToastNotifier().Show(toast);
                 Environment.Exit(0);
                 return;
             }
@@ -408,36 +473,20 @@ namespace WarThunderChatTranslator
 
         private async Task HandleGameChatRequest(HttpListenerRequest request, HttpListenerResponse response)
         {
-            var lastId = request.QueryString["lastId"] ?? "0";
-            var targetUrl = $"http://127.0.0.1:{currentPort}/gamechat?lastId={lastId}";
-            var responseData = await ForwardRequestAsync(targetUrl);
-
-            var chatMessages = JsonConvert.DeserializeObject<List<WarThunderChatTranslator.Entities.ChatMessage>>(responseData);
-
-            var translationTasks = chatMessages.Select(async message =>
+            // 面板行为保持不变：转发查询中的 lastId（面板目前不传，即全量拉取后整页重渲染）
+            int lastId = 0;
+            if (!int.TryParse(request.QueryString["lastId"], out lastId))
             {
-                message.Msg = Regex.Replace(message.Msg.Replace("\t", ""), COLOR_PATTERN, match => match.Groups[2].Value);
-                message.Mode = message.Mode.Replace("\t", "");
+                lastId = 0;
+            }
 
-                if (!translationCache.TryGetValue(message.Id, out string translatedMsg))
-                {
-                    try
-                    {
-                        var translationResult = await TranslationHelper.TranslateAsync(message.Msg);
-                        translatedMsg = translationResult.Translation;
-                        translationCache[message.Id] = translatedMsg;
-                    }
-                    catch
-                    {
-                        translatedMsg = "(翻译失败) " + message.Msg;
-                    }
-                }
+            var chatMessages = await ChatService.FetchAndTranslateAsync(lastId);
 
-                message.TranslatedMessage = translatedMsg;
-                message.PrettyMessage = $"{message.Sender}: {translatedMsg}";
-            }).ToList();
-
-            await Task.WhenAll(translationTasks);
+            if (chatMessages == null)
+            {
+                await SendErrorResponse(response, "聊天数据请求失败");
+                return;
+            }
 
             var processedData = JsonConvert.SerializeObject(chatMessages);
             await SendResponse(response, processedData, "application/json; charset=utf-8");
@@ -537,14 +586,6 @@ namespace WarThunderChatTranslator
             }
         }
 
-        private async Task<string> ForwardRequestAsync(string url)
-        {
-            using var client = new HttpClient();
-            var response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
-        }
-
         private async Task SendResponse(HttpListenerResponse response, string data, string contentType)
         {
             response.ContentEncoding = Encoding.UTF8;
@@ -562,6 +603,7 @@ namespace WarThunderChatTranslator
 
         protected void OnClosed()
         {
+            _floatController?.Dispose();
             _httpListener.Stop();
             _httpListener.Close();
         }

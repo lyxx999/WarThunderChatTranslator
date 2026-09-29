@@ -48,6 +48,7 @@
                                     <ComboBoxItem Tag="Yandex">Yandex</ComboBoxItem>
                                     <ComboBoxItem x:Name="Bing_Selection" Tag="Bing" IsEnabled="false">Bing（需要Token）</ComboBoxItem>
                                     <ComboBoxItem Tag="Google">Google（需要网络环境）</ComboBoxItem>
+                                    <ComboBoxItem x:Name="CustomAI_Selection" Tag="CustomAI">自定义AI（OpenAI兼容接口）</ComboBoxItem>
                                 </ComboBox>
                             </labs:SettingsCard>
                             <labs:SettingsCard
@@ -71,18 +72,93 @@
                             </labs:SettingsCard>
                             <labs:SettingsCard
                                 MaxWidth="2000"
+                                Description="OpenAI兼容接口的Base URL，例如 https://api.openai.com/v1 ，本地服务如 http://localhost:11434/v1 （Ollama）"
+                                Header="自定义AI · API地址"
+                                Visibility="{Binding IsSelected, ElementName=CustomAI_Selection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8c1;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <TextBox
+                                    x:Name="CustomAI_BaseUrl"
+                                    PlaceholderText="https://api.openai.com/v1"
+                                    TextChanged="CustomAI_BaseUrl_TextChanged" />
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Description="接口的API Key，本地服务（如Ollama）可留空"
+                                Header="自定义AI · API密钥"
+                                Visibility="{Binding IsSelected, ElementName=CustomAI_Selection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#x0e928;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <TextBox
+                                    x:Name="CustomAI_ApiKey"
+                                    PlaceholderText="sk-...（可留空）"
+                                    TextChanged="CustomAI_ApiKey_TextChanged" />
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Description="模型名称，例如 gpt-4o-mini、deepseek-chat、qwen2.5"
+                                Header="自定义AI · 模型"
+                                Visibility="{Binding IsSelected, ElementName=CustomAI_Selection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8f1;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <TextBox
+                                    x:Name="CustomAI_Model"
+                                    PlaceholderText="deepseek-chat"
+                                    TextChanged="CustomAI_Model_TextChanged" />
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Description="聊天补全接口路径，OpenAI兼容服务一般为 /chat/completions"
+                                Header="自定义AI · 接口路径"
+                                Visibility="{Binding IsSelected, ElementName=CustomAI_Selection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe774;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <TextBox
+                                    x:Name="CustomAI_Endpoint"
+                                    PlaceholderText="/chat/completions"
+                                    TextChanged="CustomAI_Endpoint_TextChanged" />
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Description="可选。提示词中的 {language} 会被替换为目标语言；留空使用默认提示词"
+                                Header="自定义AI · 系统提示词"
+                                Visibility="{Binding IsSelected, ElementName=CustomAI_Selection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xf2b7;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <TextBox
+                                    x:Name="CustomAI_SystemPrompt"
+                                    AcceptsReturn="True"
+                                    MaxHeight="120"
+                                    PlaceholderText="留空使用默认提示词"
+                                    TextChanged="CustomAI_SystemPrompt_TextChanged"
+                                    TextWrapping="Wrap" />
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
                                 Description="测试翻译功能"
                                 Header="测试">
                                 <labs:SettingsCard.HeaderIcon>
                                     <FontIcon Glyph="&#xf87b;" />
                                 </labs:SettingsCard.HeaderIcon>
-                                <StackPanel Orientation="Horizontal" Spacing="18">
-                                    <ProgressRing
-                                        x:Name="Checking"
-                                        Width="24"
-                                        Height="24"
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="18">
+                                        <ProgressRing
+                                            x:Name="Checking"
+                                            Width="24"
+                                            Height="24"
+                                            Visibility="Collapsed" />
+                                        <Button Click="Button_Click" Content="测试翻译功能" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        x:Name="TestResult"
+                                        Margin="0,12,0,0"
+                                        TextWrapping="Wrap"
                                         Visibility="Collapsed" />
-                                    <Button Click="Button_Click" Content="测试翻译功能" />
                                 </StackPanel>
                             </labs:SettingsCard>
                         </StackPanel>

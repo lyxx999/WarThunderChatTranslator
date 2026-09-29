@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -28,6 +28,10 @@
             <SymbolIconSource Symbol="ClosePane" />
         </XamlUICommand.IconSource>
     </XamlUICommand>
+    <XamlUICommand
+        x:Key="FloatWindowCommand"
+        Description="显示/隐藏聊天浮窗"
+        Label="浮窗" />
     <tb:TaskbarIcon
         x:Key="TrayIcon"
         ContextMenuMode="SecondWindow"
@@ -38,6 +42,7 @@
         Visibility="Visible">
         <tb:TaskbarIcon.ContextFlyout>
             <MenuFlyout>
+                <MenuFlyoutItem Command="{StaticResource FloatWindowCommand}" Tag="FloatWindow" />
                 <MenuFlyoutItem Command="{StaticResource OpenDashboardCommand}" />
                 <MenuFlyoutItem Command="{StaticResource ShowHideWindowCommand}" />
                 <MenuFlyoutSeparator />

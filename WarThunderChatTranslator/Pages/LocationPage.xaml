@@ -6,9 +6,131 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:labs="using:WinUICommunity"
     xmlns:local="using:WarThunderChatTranslator.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="Transparent"
+    Loaded="Page_Loaded"
     mc:Ignorable="d">
-    <Grid Padding="20,0,0,0" RowSpacing="24" />
+    <Grid Padding="20,0,0,0" RowSpacing="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            x:Name="Header"
+            Margin="0,44,0,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            AutomationProperties.HeadingLevel="1"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="位置和布局" />
+
+        <ScrollViewer Grid.Row="1">
+            <Grid Padding="0,0,20,0" RowSpacing="0">
+                <StackPanel>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗显示时长"
+                        Description="新消息出现后，浮窗保持显示的时间（秒），到时自动淡出">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Slider
+                                x:Name="DurationSlider"
+                                Width="200"
+                                Minimum="1"
+                                Maximum="60"
+                                StepFrequency="1"
+                                Value="3" />
+                            <TextBlock
+                                x:Name="DurationValue"
+                                Grid.Column="1"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="3 秒" />
+                        </Grid>
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗淡出速度"
+                        Description="浮窗淡入/淡出渐变动画的时长（秒），值越小消失越利落">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Slider
+                                x:Name="FadeSlider"
+                                Width="200"
+                                Minimum="0.1"
+                                Maximum="3"
+                                StepFrequency="0.1"
+                                Value="0.5" />
+                            <TextBlock
+                                x:Name="FadeValue"
+                                Grid.Column="1"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="0.5 秒" />
+                        </Grid>
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗背景不透明度"
+                        Description="浮窗背景的不透明度，值越低越透明（0%-100%，0 为完全透明）；文字始终全不透明">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Slider
+                                x:Name="OpacitySlider"
+                                Width="200"
+                                Minimum="0"
+                                Maximum="100"
+                                StepFrequency="5"
+                                Value="85" />
+                            <TextBlock
+                                x:Name="OpacityValue"
+                                Grid.Column="1"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="85%" />
+                        </Grid>
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗显示原文"
+                        Description="在译文下方以灰色小字显示英文原文">
+                        <ToggleSwitch
+                            x:Name="ShowOriginalToggle"
+                            OffContent="关"
+                            OnContent="开" />
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗固定显示"
+                        Description="浮窗常驻显示、不自动淡出，便于阅读历史消息（游戏中仍然不可点击）">
+                        <ToggleSwitch
+                            x:Name="PinnedToggle"
+                            OffContent="关"
+                            OnContent="开" />
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗清空时机"
+                        Description="浮窗消息何时清空：退出对局立即清空，或等下一局开始时（地图加载完成）清空">
+                        <ComboBox x:Name="ClearModeCombo" Width="260">
+                            <ComboBoxItem Content="退出对局时立即清空" Tag="exit" />
+                            <ComboBoxItem Content="下一局开始时清空" Tag="next" />
+                        </ComboBox>
+                    </labs:SettingsCard>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </Page>

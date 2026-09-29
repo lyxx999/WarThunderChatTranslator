@@ -19,7 +19,7 @@ namespace WarThunderChatTranslator.Pages
         public UpdatePage()
         {
             _logger = LogManager.GetCurrentClassLogger();
-            _logger.Info("打开参数配置页面");
+            _logger.Info("鎵撳紑鍙傛暟閰嶇疆椤甸潰");
             InitializeComponent();
         }
 
@@ -54,7 +54,7 @@ namespace WarThunderChatTranslator.Pages
                 }
                 else
                 {
-                    dispatcherQueue.TryEnqueue(() => ShowToast("您当前使用的是最新版本！"));
+                    dispatcherQueue.TryEnqueue(() => ShowToast("鎮ㄥ綋鍓嶄娇鐢ㄧ殑鏄渶鏂扮増鏈紒"));
                 }
 
                 dispatcherQueue.TryEnqueue(() =>
@@ -66,7 +66,7 @@ namespace WarThunderChatTranslator.Pages
             catch (Exception ex)
             {
                 _logger.Error(ex);
-                dispatcherQueue.TryEnqueue(() => ShowToast($"检查更新失败：{ex.Message}"));
+                dispatcherQueue.TryEnqueue(() => ShowToast($"妫�鏌ユ洿鏂板け璐ワ細{ex.Message}"));
             }
             finally
             {
@@ -76,16 +76,16 @@ namespace WarThunderChatTranslator.Pages
 
         private async Task ShowUpdateDialogAsync(string version, DateTimeOffset publishedAt, string sizeString, string updateUrl)
         {
-            _logger.Info($"发现新版本{version}");
+            _logger.Info($"鍙戠幇鏂扮増鏈瑊version}");
             var dialog = new ContentDialog
             {
                 XamlRoot = this.XamlRoot,
                 Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
-                Title = "发现新版本！",
-                PrimaryButtonText = "前往更新",
-                CloseButtonText = "暂不更新",
+                Title = "鍙戠幇鏂扮増鏈紒",
+                PrimaryButtonText = "鍓嶅線鏇存柊",
+                CloseButtonText = "鏆備笉鏇存柊",
                 DefaultButton = ContentDialogButton.Primary,
-                Content = $"检测到新版本：V{version}\n发布时间：{publishedAt}\n大小：{sizeString}"
+                Content = $"妫�娴嬪埌鏂扮増鏈細V{version}\n鍙戝竷鏃堕棿锛歿publishedAt}\n澶у皬锛歿sizeString}"
             };
 
             var result = await dialog.ShowAsync();
@@ -101,7 +101,7 @@ namespace WarThunderChatTranslator.Pages
             var stringElements = toastXml.GetElementsByTagName("text");
             stringElements[0].AppendChild(toastXml.CreateTextNode(message));
             var toast = new ToastNotification(toastXml);
-            ToastNotificationManager.CreateToastNotifier("WarThunderChatTranslator").Show(toast);
+            ToastNotificationManager.CreateToastNotifier().Show(toast);
         }
 
         private string ConvertSizeToString(int sizeInBytes)

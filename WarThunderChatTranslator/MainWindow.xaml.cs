@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation and Contributors.
+ï»¿// Copyright (c) Microsoft Corporation and Contributors.
 // Licensed under the MIT License.
 
 using Microsoft.UI.Xaml.Controls;
@@ -24,13 +24,13 @@ namespace WarThunderChatTranslator
 
     public sealed partial class MainWindow : Window
     {
-        public string TitleText = "Õ½ÕùÀ×öªÁÄÌì·­ÒëÆ÷";
+        public string TitleText = "æˆ˜äº‰é›·éœ†èŠå¤©ç¿»è¯‘å™¨";
         internal static MainWindow Instance { get; private set; }
         private OverlappedPresenter _presenter;
         public MainWindow()
         {
             this.InitializeComponent();
-            this.Title = "·­ÒëÆ÷ÉèÖÃ½çÃæ";
+            this.Title = "ç¿»è¯‘å™¨è®¾ç½®ç•Œé¢";
             Instance = this;
 
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);

@@ -1,4 +1,4 @@
-﻿using GTranslate.Results;
+using GTranslate.Results;
 using GTranslate.Translators;
 using NLog;
 using System;
@@ -117,6 +117,16 @@ namespace WarThunderChatTranslator.Helpers
                 case "Google":
                     {
                         translator = new AggregateTranslator((IReadOnlyCollection<ITranslator>)(object)new ITranslator[1] { new GoogleTranslator2(client) });
+                        break;
+                    }
+                case "CustomAI":
+                    {
+                        var baseUrl = ApplicationConfig.GetSettings("CustomAI_BaseUrl") ?? "";
+                        var apiKey = ApplicationConfig.GetSettings("CustomAI_ApiKey") ?? "";
+                        var model = ApplicationConfig.GetSettings("CustomAI_Model") ?? "";
+                        var endpoint = ApplicationConfig.GetSettings("CustomAI_Endpoint") ?? "/chat/completions";
+                        var systemPrompt = ApplicationConfig.GetSettings("CustomAI_SystemPrompt") ?? "";
+                        translator = new AggregateTranslator((IReadOnlyCollection<ITranslator>)(object)new ITranslator[1] { new CustomAITranslator(client, baseUrl, apiKey, model, endpoint, systemPrompt) });
                         break;
                     }
             }

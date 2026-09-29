@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="WarThunderChatTranslator.FloatWindow.FloatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WarThunderChatFloat"
+        Width="340" Height="220"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+    <Border x:Name="RootBorder"
+            Margin="6"
+            CornerRadius="10"
+            Background="#CC101418"
+            BorderBrush="#33FFFFFF"
+            BorderThickness="1">
+        <Grid x:Name="ContentGrid"
+              Margin="12,10,12,10"
+              TextElement.FontSize="14"
+              TextElement.FontFamily="Segoe UI">
+            <!-- 占位提示：固定显示但暂无消息时可见 -->
+            <TextBlock x:Name="Placeholder"
+                       Text="等待消息…"
+                       Foreground="#66FFFFFF"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Visibility="Collapsed" />
+            <!-- 消息列表：新消息自动回底显示最新；鼠标在窗内滚轮可翻看旧消息，
+                 鼠标移出或来新消息时自动回底（代码控制），不显示滚动条 -->
+            <ScrollViewer x:Name="MessageScroll"
+                          VerticalScrollBarVisibility="Hidden"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Focusable="False">
+                <ItemsControl x:Name="MessageList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,8">
+                                <Grid>
+                                    <!-- 描边：8 方向偏移副本（关闭时 Collapsed） -->
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_E}" Y="{Binding Oy_E}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_W}" Y="{Binding Oy_W}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_N}" Y="{Binding Oy_N}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_S}" Y="{Binding Oy_S}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_NE}" Y="{Binding Oy_NE}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_NW}" Y="{Binding Oy_NW}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_SE}" Y="{Binding Oy_SE}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Foreground="{Binding OutlineColor}"
+                                               Visibility="{Binding OutlineVisibility}">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform X="{Binding Ox_SW}" Y="{Binding Oy_SW}" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <!-- 主文字（顶层） -->
+                                    <TextBlock Text="{Binding Line}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{Binding Color}" />
+                                </Grid>
+                                <TextBlock Text="{Binding OriginalLine}"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="#80FFFFFF"
+                                           Visibility="{Binding OriginalVisibility}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</Window>

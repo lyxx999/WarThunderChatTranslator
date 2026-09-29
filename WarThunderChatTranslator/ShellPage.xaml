@@ -80,8 +80,7 @@
                         <NavigationViewItem
                             Margin="0,0,12,0"
                             helpers:NavigationHelperEx.NavigateTo="LocationPage"
-                            Content="位置和布局"
-                            IsEnabled="False">
+                            Content="位置和布局">
                             <NavigationViewItem.Icon>
                                 <BitmapIcon ShowAsMonochrome="False" UriSource="ms-appx:///Assets/FluentIcons/Size.ico" />
                             </NavigationViewItem.Icon>

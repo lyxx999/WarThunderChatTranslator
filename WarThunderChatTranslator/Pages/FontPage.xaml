@@ -112,6 +112,62 @@
                                     <Button Click="System_Button_Click" Content="选择颜色" />
                                 </StackPanel>
                             </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Header="文字描边"
+                                Description="为浮窗文字添加描边，在复杂游戏画面上更易读">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8d3;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <ToggleSwitch
+                                    x:Name="OutlineToggle"
+                                    OffContent="关"
+                                    OnContent="开" />
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Header="文字描边颜色"
+                                Description="文字描边的颜色（描边开启时生效）">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8d3;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle
+                                        x:Name="OutlineColorPreview"
+                                        Width="30"
+                                        Height="30"
+                                        Margin="0,0,10,0"
+                                        Fill="{x:Bind OutlinePreviewBrush, Mode=TwoWay}" />
+                                    <Button Click="Outline_Button_Click" Content="选择颜色" />
+                                </StackPanel>
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Header="文字描边宽度"
+                                Description="文字描边的粗细（像素，0.5-4，描边开启时生效）">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8d3;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider
+                                        x:Name="OutlineWidthSlider"
+                                        Width="200"
+                                        Minimum="0.5"
+                                        Maximum="4"
+                                        StepFrequency="0.5"
+                                        Value="1" />
+                                    <TextBlock
+                                        x:Name="OutlineWidthValue"
+                                        Grid.Column="1"
+                                        Margin="16,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Text="1 像素" />
+                                </Grid>
+                            </labs:SettingsCard>
                         </StackPanel>
                     </ContentPresenter.Content>
                 </ContentPresenter>
