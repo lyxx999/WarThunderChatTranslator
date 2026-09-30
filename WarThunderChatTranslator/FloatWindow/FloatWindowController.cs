@@ -36,8 +36,9 @@ namespace WarThunderChatTranslator.FloatWindow
         // 设置快照（LoadSettings 刷新，在 WPF 线程应用）
         private double _displayDuration = 3;
         private double _fadeSpeed = 0.5;
-        private double _opacity = 0.85;
+        private double _opacity = 0.20;
         private bool _showOriginal;
+        private bool _showChannelTag = true;
         private bool _pinned;
         private bool _outlineEnabled;
         private string _outlineColor = "#FFFFFFFF";
@@ -429,8 +430,11 @@ namespace WarThunderChatTranslator.FloatWindow
         {
             _displayDuration = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_DisplayDuration"), 3);
             _fadeSpeed = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_FadeSpeed"), 0.5);
-            _opacity = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_Opacity"), 85) / 100.0;
+            _opacity = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_Opacity"), 20) / 100.0;
             _showOriginal = ParseBool(ApplicationConfig.GetSettings("FloatWindow_ShowOriginal"));
+            // 阵营标识（[友军]/[所有人] 前缀）默认开：与游戏内聊天一致
+            _showChannelTag = ApplicationConfig.GetSettings("FloatWindow_ShowChannelTag") == null
+                || ParseBool(ApplicationConfig.GetSettings("FloatWindow_ShowChannelTag"));
             _pinned = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Pinned"));
             _outlineEnabled = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Outline"));
             _outlineColor = ApplicationConfig.GetSettings("FloatWindow_OutlineColor") ?? "#FFFFFFFF";
@@ -455,12 +459,17 @@ namespace WarThunderChatTranslator.FloatWindow
                 _fadeSpeed,
                 _opacity,
                 _showOriginal,
+                _showChannelTag,
                 _pinned,
                 fontSize,
                 fontName,
-                ParseBrush(ApplicationConfig.GetSettings("AllyFontColor"), "#FF5BC0DE"),
-                ParseBrush(ApplicationConfig.GetSettings("EnemyFontColor"), "#FFD9534F"),
-                ParseBrush(ApplicationConfig.GetSettings("SystemFontColor"), "#FFD4A017"),
+                new FloatPalette
+                {
+                    AllyBrush = ParseBrush(ApplicationConfig.GetSettings("AllyFontColor"), "#FF5472F2"),
+                    EnemyBrush = ParseBrush(ApplicationConfig.GetSettings("EnemyFontColor"), "#FFF25A54"),
+                    SystemBrush = ParseBrush(ApplicationConfig.GetSettings("SystemFontColor"), "#FFD4A017"),
+                    NeutralBrush = ParseBrush(ApplicationConfig.GetSettings("NeutralFontColor"), "#FFB6B6B6"),
+                },
                 _outlineEnabled,
                 _outlineColor,
                 _outlineWidth);

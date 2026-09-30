@@ -21,6 +21,7 @@ namespace WarThunderChatTranslator.Pages
         public Brush AllyPreviewBrush { get; set; }
         public Brush EnemyPreviewBrush { get; set; }
         public Brush SystemPreviewBrush { get; set; }
+        public Brush NeutralPreviewBrush { get; set; }
         public Brush OutlinePreviewBrush { get; set; }
 
         public List<Tuple<string, FontFamily>> Fonts { get; set; }
@@ -41,6 +42,7 @@ namespace WarThunderChatTranslator.Pages
             AllyPreviewBrush = new SolidColorBrush(GetFontColor("AllyFontColor"));
             EnemyPreviewBrush = new SolidColorBrush(GetFontColor("EnemyFontColor"));
             SystemPreviewBrush = new SolidColorBrush(GetFontColor("SystemFontColor"));
+            NeutralPreviewBrush = new SolidColorBrush(GetFontColor("NeutralFontColor"));
             OutlinePreviewBrush = new SolidColorBrush(GetFontColor("FloatWindow_OutlineColor"));
         }
 
@@ -72,6 +74,19 @@ namespace WarThunderChatTranslator.Pages
             ApplicationConfig.SaveSettings("FloatWindow_OutlineWidth",
                 OutlineWidthSlider.Value.ToString("0.0", CultureInfo.InvariantCulture));
             WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
+        }
+
+        private void OutlineWidthResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 已在默认值时 ValueChanged 不触发，手动补一次写入
+            if (OutlineWidthSlider.Value == 1)
+            {
+                OnOutlineWidthChanged();
+            }
+            else
+            {
+                OutlineWidthSlider.Value = 1;
+            }
         }
 
         private static bool ParseBool(string value)
@@ -179,6 +194,12 @@ namespace WarThunderChatTranslator.Pages
         {
             OnColorButtonClick("SystemFontColor", SystemPreviewBrush, SystemColorPreview);
             SystemPreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
+        }
+
+        private void Neutral_Button_Click(object sender, RoutedEventArgs e)
+        {
+            OnColorButtonClick("NeutralFontColor", NeutralPreviewBrush, NeutralColorPreview);
+            NeutralPreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
         }
 
         private void Outline_Button_Click(object sender, RoutedEventArgs e)

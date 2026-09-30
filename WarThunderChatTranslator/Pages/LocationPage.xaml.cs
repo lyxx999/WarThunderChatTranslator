@@ -28,6 +28,7 @@ namespace WarThunderChatTranslator.Pages
             FadeSlider.ValueChanged += (s, e) => OnFadeChanged();
             OpacitySlider.ValueChanged += (s, e) => OnOpacityChanged();
             ShowOriginalToggle.Toggled += (s, e) => OnShowOriginalToggled();
+            ShowChannelToggle.Toggled += (s, e) => OnShowChannelToggled();
             PinnedToggle.Toggled += (s, e) => OnPinnedToggled();
             ClearModeCombo.SelectionChanged += (s, e) => OnClearModeChanged();
         }
@@ -36,8 +37,9 @@ namespace WarThunderChatTranslator.Pages
         {
             DurationSlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_DisplayDuration"), 3);
             FadeSlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_FadeSpeed"), 0.5);
-            OpacitySlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_Opacity"), 85);
+            OpacitySlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_Opacity"), 20);
             ShowOriginalToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_ShowOriginal"));
+            ShowChannelToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_ShowChannelTag"));
             PinnedToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Pinned"));
             ClearModeCombo.SelectedIndex = ApplicationConfig.GetSettings("FloatWindow_ClearMode") == "next" ? 1 : 0;
             UpdateLabels();
@@ -94,6 +96,16 @@ namespace WarThunderChatTranslator.Pages
             }
         }
 
+        private void OnShowChannelToggled()
+        {
+            if (_initialized)
+            {
+                ApplicationConfig.SaveSettings("FloatWindow_ShowChannelTag",
+                    ShowChannelToggle.IsOn ? "true" : "false");
+                FloatWindowController.Instance?.ApplySettings();
+            }
+        }
+
         private void OnPinnedToggled()
         {
             if (_initialized)
@@ -110,6 +122,30 @@ namespace WarThunderChatTranslator.Pages
             {
                 ApplicationConfig.SaveSettings("FloatWindow_ClearMode", (string)item.Tag);
                 FloatWindowController.Instance?.ApplySettings();
+            }
+        }
+
+        // ---------- 恢复默认 ----------
+
+        private void DurationResetButton_Click(object sender, RoutedEventArgs e) =>
+            ResetTo(DurationSlider, 3, OnDurationChanged);
+
+        private void FadeResetButton_Click(object sender, RoutedEventArgs e) =>
+            ResetTo(FadeSlider, 0.5, OnFadeChanged);
+
+        private void OpacityResetButton_Click(object sender, RoutedEventArgs e) =>
+            ResetTo(OpacitySlider, 20, OnOpacityChanged);
+
+        /// <summary>滑块已经停在默认值时 ValueChanged 不会触发，这里补一次写入。</summary>
+        private static void ResetTo(Slider slider, double defaultValue, Action apply)
+        {
+            if (slider.Value == defaultValue)
+            {
+                apply();
+            }
+            else
+            {
+                slider.Value = defaultValue;
             }
         }
 

@@ -114,6 +114,23 @@
                             </labs:SettingsCard>
                             <labs:SettingsCard
                                 MaxWidth="2000"
+                                Header="中性文本颜色"
+                                Description="时间戳与敌军消息正文的颜色（浮窗用）">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8d3;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle
+                                        x:Name="NeutralColorPreview"
+                                        Width="30"
+                                        Height="30"
+                                        Margin="0,0,10,0"
+                                        Fill="{x:Bind NeutralPreviewBrush, Mode=TwoWay}" />
+                                    <Button Click="Neutral_Button_Click" Content="选择颜色" />
+                                </StackPanel>
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
                                 Header="文字描边"
                                 Description="为浮窗文字添加描边，在复杂游戏画面上更易读">
                                 <labs:SettingsCard.HeaderIcon>
@@ -151,7 +168,8 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Slider
                                         x:Name="OutlineWidthSlider"
@@ -166,6 +184,13 @@
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center"
                                         Text="1 像素" />
+                                    <Button
+                                        Grid.Column="2"
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="OutlineWidthResetButton_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 1 像素" />
                                 </Grid>
                             </labs:SettingsCard>
                         </StackPanel>

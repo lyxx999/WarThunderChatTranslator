@@ -110,9 +110,10 @@ namespace WarThunderChatTranslator
                 { "FontFamily", "Segoe UI" },
                 { "FontSize", "14" },
                 { "FontStyle", "normal" },
-                { "AllyFontColor", "#FF5BC0DE" },
-                { "EnemyFontColor", "#FFD9534F" },
-                { "SystemFontColor", "#FF856404" },
+                { "AllyFontColor", "#FF5472F2" },
+                { "EnemyFontColor", "#FFF25A54" },
+                { "SystemFontColor", "#FFD4A017" },
+                { "NeutralFontColor", "#FFB6B6B6" },
                 { "Theme", "Default" },
                 { "BackgroundCSS", "background-color: #f4f4f4;" },
                 { "CustomAI_BaseUrl", "" },
@@ -123,8 +124,9 @@ namespace WarThunderChatTranslator
                 { "FloatWindow_Enabled", "false" },
                 { "FloatWindow_DisplayDuration", "3" },
                 { "FloatWindow_FadeSpeed", "0.5" },
-                { "FloatWindow_Opacity", "85" },
+                { "FloatWindow_Opacity", "20" },
                 { "FloatWindow_ShowOriginal", "false" },
+                { "FloatWindow_ShowChannelTag", "true" },
                 { "FloatWindow_Pinned", "false" },
                 { "FloatWindow_Position", "" },
                 { "FloatWindow_Size", "" },
@@ -143,9 +145,24 @@ namespace WarThunderChatTranslator
                 }
             }
 
+            // 旧默认色是网页样式配色、和游戏内不一致；只升级仍停留在旧默认值上的用户
+            MigrateSettingIfUnchanged("AllyFontColor", "#FF5BC0DE", "#FF5472F2");
+            MigrateSettingIfUnchanged("EnemyFontColor", "#FFD9534F", "#FFF25A54");
+            MigrateSettingIfUnchanged("SystemFontColor", "#FF856404", "#FFD4A017");
+            // 背景 85% 在游戏画面上太像一块面板，默认降到 20%（设置页可一键恢复）
+            MigrateSettingIfUnchanged("FloatWindow_Opacity", "85", "20");
+
             logger.Info("初始化翻译器对象");
             TranslationHelper.init();
             logger.Info("翻译器对象初始化完成");
+        }
+
+        private static void MigrateSettingIfUnchanged(string key, string oldValue, string newValue)
+        {
+            if (ApplicationConfig.GetSettings(key) == oldValue)
+            {
+                ApplicationConfig.SaveSettings(key, newValue);
+            }
         }
 
         private void InitializeTrayIcon()
@@ -497,8 +514,8 @@ namespace WarThunderChatTranslator
             var fontFamily = ApplicationConfig.GetSettings("FontFamily") ?? "Segoe UI";
             var fontSize = ApplicationConfig.GetSettings("FontSize") ?? "14px";
             var fontStyle = ApplicationConfig.GetSettings("FontStyle") ?? "Normal";
-            var allyFontColor = ToRgba(ApplicationConfig.GetSettings("AllyFontColor") ?? "#FF5BC0DE");
-            var enemyFontColor = ToRgba(ApplicationConfig.GetSettings("EnemyFontColor") ?? "#FFD9534F");
+            var allyFontColor = ToRgba(ApplicationConfig.GetSettings("AllyFontColor") ?? "#FF5472F2");
+            var enemyFontColor = ToRgba(ApplicationConfig.GetSettings("EnemyFontColor") ?? "#FFF25A54");
             var systemFontColor = ToRgba(ApplicationConfig.GetSettings("SystemFontColor") ?? "#FF856404");
             var bodyBackground = ApplicationConfig.GetSettings("BackgroundCSS") ?? "opacity: 0;";
 

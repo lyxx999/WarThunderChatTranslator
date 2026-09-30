@@ -2,6 +2,7 @@
 <Window x:Class="WarThunderChatTranslator.FloatWindow.FloatWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:fw="clr-namespace:WarThunderChatTranslator.FloatWindow"
         Title="WarThunderChatFloat"
         Width="340" Height="220"
         WindowStyle="None"
@@ -99,10 +100,9 @@
                                             <TranslateTransform X="{Binding Ox_SW}" Y="{Binding Oy_SW}" />
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
-                                    <!-- 主文字（顶层） -->
-                                    <TextBlock Text="{Binding Line}"
-                                               TextWrapping="Wrap"
-                                               Foreground="{Binding Color}" />
+                                    <!-- 主文字（顶层）：分段着色，各段颜色由代码给出 -->
+                                    <fw:SegmentTextBlock Segments="{Binding Segments}"
+                                                         TextWrapping="Wrap" />
                                 </Grid>
                                 <TextBlock Text="{Binding OriginalLine}"
                                            TextWrapping="Wrap"

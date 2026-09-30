@@ -37,7 +37,8 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Slider
                                 x:Name="DurationSlider"
@@ -52,6 +53,13 @@
                                 Margin="16,0,0,0"
                                 VerticalAlignment="Center"
                                 Text="3 秒" />
+                            <Button
+                                Grid.Column="2"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="DurationResetButton_Click"
+                                Content="恢复默认"
+                                ToolTipService.ToolTip="恢复为 3 秒" />
                         </Grid>
                     </labs:SettingsCard>
                     <labs:SettingsCard
@@ -61,7 +69,8 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Slider
                                 x:Name="FadeSlider"
@@ -76,6 +85,13 @@
                                 Margin="16,0,0,0"
                                 VerticalAlignment="Center"
                                 Text="0.5 秒" />
+                            <Button
+                                Grid.Column="2"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="FadeResetButton_Click"
+                                Content="恢复默认"
+                                ToolTipService.ToolTip="恢复为 0.5 秒" />
                         </Grid>
                     </labs:SettingsCard>
                     <labs:SettingsCard
@@ -85,7 +101,8 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Slider
                                 x:Name="OpacitySlider"
@@ -93,13 +110,20 @@
                                 Minimum="0"
                                 Maximum="100"
                                 StepFrequency="5"
-                                Value="85" />
+                                Value="20" />
                             <TextBlock
                                 x:Name="OpacityValue"
                                 Grid.Column="1"
                                 Margin="16,0,0,0"
                                 VerticalAlignment="Center"
-                                Text="85%" />
+                                Text="20%" />
+                            <Button
+                                Grid.Column="2"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="OpacityResetButton_Click"
+                                Content="恢复默认"
+                                ToolTipService.ToolTip="恢复为 20%" />
                         </Grid>
                     </labs:SettingsCard>
                     <labs:SettingsCard
@@ -108,6 +132,15 @@
                         Description="在译文下方以灰色小字显示英文原文">
                         <ToggleSwitch
                             x:Name="ShowOriginalToggle"
+                            OffContent="关"
+                            OnContent="开" />
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="浮窗显示阵营标识"
+                        Description="在每行前显示 [友军] / [所有人] 等频道标识（与游戏内一致）">
+                        <ToggleSwitch
+                            x:Name="ShowChannelToggle"
                             OffContent="关"
                             OnContent="开" />
                     </labs:SettingsCard>

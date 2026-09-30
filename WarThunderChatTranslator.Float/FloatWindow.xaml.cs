@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -34,8 +35,9 @@ namespace WarThunderChatTranslator.FloatWindow
 
         private double _displayDuration = 3;
         private double _fadeSpeed = 0.5;
-        private double _targetOpacity = 0.85;
+        private double _targetOpacity = 0.20;
         private bool _showOriginal;
+        private bool _showChannelTag = true;
         private bool _pinned;
         private bool _fadeRunning;
 
@@ -45,9 +47,12 @@ namespace WarThunderChatTranslator.FloatWindow
         private double _outlineWidth = 1;
 
         private readonly DispatcherTimer _displayTimer = new DispatcherTimer();
+
+        // 文字配色（来自「字体和样式」页；默认值取色自游戏内聊天）
         private Brush _allyBrush;
         private Brush _enemyBrush;
         private Brush _systemBrush;
+        private Brush _neutralBrush;
 
         [Flags]
         private enum ResizeDir
@@ -77,9 +82,11 @@ namespace WarThunderChatTranslator.FloatWindow
         {
             InitializeComponent();
 
-            _allyBrush = MakeBrush("#FF5BC0DE");
-            _enemyBrush = MakeBrush("#FFD9534F");
+            // 游戏内实测取色：阵营色 友军 #5472F2 / 敌军 #F25A54，手打正文与时间戳 #B6B6B6
+            _allyBrush = MakeBrush("#FF5472F2");
+            _enemyBrush = MakeBrush("#FFF25A54");
             _systemBrush = MakeBrush("#FFD4A017");
+            _neutralBrush = MakeBrush("#FFB6B6B6");
 
             _displayTimer.Tick += (s, e) =>
             {
@@ -103,8 +110,8 @@ namespace WarThunderChatTranslator.FloatWindow
         // ---------- 设置 ----------
 
         public void ApplySettings(double displayDuration, double fadeSpeed, double opacity,
-            bool showOriginal, bool pinned, double fontSize, string fontFamilyName,
-            Brush allyBrush, Brush enemyBrush, Brush systemBrush,
+            bool showOriginal, bool showChannelTag, bool pinned, double fontSize, string fontFamilyName,
+            FloatPalette palette,
             bool outline, string outlineColor, double outlineWidth)
         {
             _displayDuration = Math.Max(1, displayDuration);
@@ -112,6 +119,7 @@ namespace WarThunderChatTranslator.FloatWindow
             // 背景不透明度允许 0（完全透明的背景，文字仍全不透明）
             _targetOpacity = Math.Min(1, Math.Max(0, opacity));
             _showOriginal = showOriginal;
+            _showChannelTag = showChannelTag;
             _pinned = pinned;
             _outline = outline;
             _outlineWidth = Math.Max(0.5, Math.Min(outlineWidth, 8));
@@ -144,9 +152,13 @@ namespace WarThunderChatTranslator.FloatWindow
                 }
             }
 
-            if (allyBrush != null) _allyBrush = allyBrush;
-            if (enemyBrush != null) _enemyBrush = enemyBrush;
-            if (systemBrush != null) _systemBrush = systemBrush;
+            if (palette != null)
+            {
+                if (palette.AllyBrush != null) _allyBrush = palette.AllyBrush;
+                if (palette.EnemyBrush != null) _enemyBrush = palette.EnemyBrush;
+                if (palette.SystemBrush != null) _systemBrush = palette.SystemBrush;
+                if (palette.NeutralBrush != null) _neutralBrush = palette.NeutralBrush;
+            }
 
             // 透明度只作用于背景：窗口本身保持全不透明，文字永远 100% 不透明
             Opacity = 1.0;
@@ -212,15 +224,13 @@ namespace WarThunderChatTranslator.FloatWindow
 
             foreach (var m in pool) // 时间序、最新在最后
             {
-                bool systemMsg = string.IsNullOrEmpty(m.Sender) && m.Enemy;
-                var brush = systemMsg ? _systemBrush : (m.Enemy ? _enemyBrush : _allyBrush);
-                string sender = string.IsNullOrEmpty(m.Sender) ? "系统" : m.Sender;
+                var segments = BuildSegments(m);
                 items.Add(new FloatMessageItem
                 {
-                    Line = $"{sender}: {m.TranslatedMessage}",
+                    Segments = segments,
+                    Line = string.Concat(segments.Select(s => s.Text)),
                     OriginalLine = m.Msg,
                     OriginalVisibility = _showOriginal ? Visibility.Visible : Visibility.Collapsed,
-                    Color = brush,
                     OutlineColor = outlineBrush,
                     OutlineVisibility = outlineVis,
                     Ox_E = ow, Oy_E = 0,
@@ -266,6 +276,39 @@ namespace WarThunderChatTranslator.FloatWindow
 
             RestartDisplayTimer();
         }
+
+        /// <summary>
+        /// 拼一行：时间 [频道] 名字: 正文，逐段取色（对齐游戏内聊天）。
+        /// 频道与名字始终用发送方阵营色；正文只有无线电快捷指令跟阵营同色，
+        /// 玩家手打的消息正文一律中性色（游戏里那条偏白的 #B6B6B6）。
+        /// </summary>
+        private List<FloatSegment> BuildSegments(ChatMessage m)
+        {
+            bool systemMsg = string.IsNullOrEmpty(m.Sender) && m.Enemy;
+            var senderBrush = systemMsg ? _systemBrush : (m.Enemy ? _enemyBrush : _allyBrush);
+            var bodyBrush = systemMsg ? _systemBrush
+                : (RadioMessages.IsRadio(m.Msg) ? senderBrush : _neutralBrush);
+
+            var segments = new List<FloatSegment>();
+            if (m.Time > 0)
+            {
+                segments.Add(MakeSegment($"{m.Time / 60}:{m.Time % 60:00} ", _neutralBrush));
+            }
+
+            string mode = (m.Mode ?? string.Empty).Trim();
+            if (_showChannelTag && mode.Length > 0)
+            {
+                segments.Add(MakeSegment($"[{mode}] ", senderBrush));
+            }
+
+            string sender = string.IsNullOrEmpty(m.Sender) ? "系统" : m.Sender;
+            segments.Add(MakeSegment($"{sender}: ", senderBrush));
+            segments.Add(MakeSegment(m.TranslatedMessage ?? m.Msg, bodyBrush));
+            return segments;
+        }
+
+        private static FloatSegment MakeSegment(string text, Brush brush) =>
+            new FloatSegment { Text = text, Brush = brush };
 
         /// <summary>
         /// 清空消息列表（对局边界调用）：显示"等待消息…"占位。

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 
@@ -8,15 +9,16 @@ namespace WarThunderChatTranslator.FloatWindow
     /// </summary>
     public class FloatMessageItem
     {
-        /// <summary>主行：发送者: 译文</summary>
+        /// <summary>主行分段：时间 [频道] 名字: 译文，每段带自己的颜色</summary>
+        public List<FloatSegment> Segments { get; set; }
+
+        /// <summary>主行纯文本（= Segments 拼接），描边用它画整行单色副本</summary>
         public string Line { get; set; }
 
         /// <summary>原文行（英文原文，可隐藏）</summary>
         public string OriginalLine { get; set; }
 
         public Visibility OriginalVisibility { get; set; }
-
-        public Brush Color { get; set; }
 
         // ---------- 描边（8 方向偏移副本，关闭时 Collapsed） ----------
 
