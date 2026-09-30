@@ -45,6 +45,7 @@ namespace WarThunderChatTranslator.FloatWindow
         private double _outlineWidth = 1;
         private string _clearMode = "exit"; // "exit"=退出对局立即清空，"next"=下一局开始时清空
         private bool _enterTogglePin = true; // 长按回车切换浮窗固定显示（仅游戏前台时生效）
+        private bool _hideWhenGameInactive; // 游戏（且翻译器自己）都不在前台时隐藏浮窗
 
         public bool Enabled => _enabled;
 
@@ -120,6 +121,7 @@ namespace WarThunderChatTranslator.FloatWindow
 
                 ApplyAppearance();
                 SyncEnterWatcher();
+                ApplyFocusGate();
                 // 重渲染现有消息，使描边/颜色等外观改动立即生效（不使隐藏窗口出现）
                 if (_pinned || _window.IsVisible)
                 {
@@ -194,6 +196,7 @@ namespace WarThunderChatTranslator.FloatWindow
 
                 _focusWatcher = new GameFocusWatcher();
                 _focusWatcher.GameForegroundChanged += OnGameForegroundChanged;
+                _focusWatcher.SelfForegroundChanged += OnSelfForegroundChanged;
                 _focusWatcher.Start();
 
                 if (_enabled)
@@ -277,6 +280,7 @@ namespace WarThunderChatTranslator.FloatWindow
 
             // 初始穿透状态：游戏在前台则立即穿透
             _window.SetClickThrough(GameFocusWatcher.IsGameInForeground());
+            ApplyFocusGate();
         }
 
         private void OnLayoutChanged(double left, double top, double width, double height)
@@ -363,8 +367,54 @@ namespace WarThunderChatTranslator.FloatWindow
                 if (!_disposed)
                 {
                     _window?.SetClickThrough(gameForeground);
+                    ApplyFocusGate();
                 }
             });
+        }
+
+        private void OnSelfForegroundChanged(bool selfForeground)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            BeginUi(() =>
+            {
+                if (!_disposed)
+                {
+                    ApplyFocusGate();
+                }
+            });
+        }
+
+        /// <summary>
+        /// 「游戏不在前台时隐藏浮窗」：翻译器自己的界面在前台时视同在前台，
+        /// 这样改设置能实时看到浮窗效果。解除隐藏后固定模式立即恢复显示，
+        /// 普通模式等下一条消息再弹（不把失焦期间的旧消息推出来）。
+        /// 在 WPF 线程调用。
+        /// </summary>
+        private void ApplyFocusGate()
+        {
+            if (_window == null)
+            {
+                return;
+            }
+
+            if (!_hideWhenGameInactive
+                || GameFocusWatcher.IsGameInForeground()
+                || GameFocusWatcher.IsSelfInForeground())
+            {
+                _window.SetForcedHidden(false);
+                if (_pinned)
+                {
+                    _window.UpdateMessages(_latest ?? new List<ChatMessage>());
+                }
+            }
+            else
+            {
+                _window.SetForcedHidden(true);
+            }
         }
 
         // ---------- 长按回车切换固定显示（WPF 线程） ----------
@@ -442,6 +492,7 @@ namespace WarThunderChatTranslator.FloatWindow
             _clearMode = ApplicationConfig.GetSettings("FloatWindow_ClearMode") ?? "exit";
             _enterTogglePin = ApplicationConfig.GetSettings("FloatWindow_TogglePinByEnter") == null
                 || ParseBool(ApplicationConfig.GetSettings("FloatWindow_TogglePinByEnter"));
+            _hideWhenGameInactive = ParseBool(ApplicationConfig.GetSettings("FloatWindow_HideWhenGameInactive"));
         }
 
         private void ApplyAppearance()
@@ -453,6 +504,7 @@ namespace WarThunderChatTranslator.FloatWindow
             }
 
             string fontName = ApplicationConfig.GetSettings("FontFamily") ?? "Segoe UI";
+            string fontStyle = ApplicationConfig.GetSettings("FontStyle") ?? "normal";
             // 文字颜色统一来自「字体和样式」页（同一套颜色也作用于浏览器面板）
             _window.ApplySettings(
                 _displayDuration,
@@ -463,6 +515,7 @@ namespace WarThunderChatTranslator.FloatWindow
                 _pinned,
                 fontSize,
                 fontName,
+                fontStyle,
                 new FloatPalette
                 {
                     AllyBrush = ParseBrush(ApplicationConfig.GetSettings("AllyFontColor"), "#FF5472F2"),

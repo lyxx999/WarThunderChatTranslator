@@ -40,6 +40,8 @@ namespace WarThunderChatTranslator.FloatWindow
         private bool _showChannelTag = true;
         private bool _pinned;
         private bool _fadeRunning;
+        // 外部强制隐藏（游戏不在前台）：隐藏并阻止淡入，解除后恢复正常显隐逻辑
+        private bool _forcedHidden;
 
         // 文字描边
         private bool _outline;
@@ -111,6 +113,7 @@ namespace WarThunderChatTranslator.FloatWindow
 
         public void ApplySettings(double displayDuration, double fadeSpeed, double opacity,
             bool showOriginal, bool showChannelTag, bool pinned, double fontSize, string fontFamilyName,
+            string fontStyle,
             FloatPalette palette,
             bool outline, string outlineColor, double outlineWidth)
         {
@@ -152,6 +155,9 @@ namespace WarThunderChatTranslator.FloatWindow
                 }
             }
 
+            // 文字样式与浏览器面板共用同一个设置项（CSS 字面量）
+            TextElement.SetFontWeight(ContentGrid, ParseFontWeight(fontStyle));
+
             if (palette != null)
             {
                 if (palette.AllyBrush != null) _allyBrush = palette.AllyBrush;
@@ -167,6 +173,18 @@ namespace WarThunderChatTranslator.FloatWindow
             if (_pinned)
             {
                 _displayTimer.Stop();
+            }
+        }
+
+        /// <summary>设置里的文字样式（与面板 CSS 同一套字面量）映射到 WPF 字重。</summary>
+        private static FontWeight ParseFontWeight(string style)
+        {
+            switch ((style ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "lighter": return FontWeights.Light;
+                case "bold": return FontWeights.Bold;
+                case "bolder": return FontWeights.ExtraBold;
+                default: return FontWeights.Normal;
             }
         }
 
@@ -251,6 +269,12 @@ namespace WarThunderChatTranslator.FloatWindow
             _userScrolledUp = false;
             Dispatcher.BeginInvoke(new Action(ScrollToBottom), DispatcherPriority.Background);
 
+            if (_forcedHidden)
+            {
+                // 游戏不在前台：只刷新内容，不弹出（解除后由调用方决定是否立刻恢复显示）
+                return;
+            }
+
             if (_pinned)
             {
                 _displayTimer.Stop();
@@ -275,6 +299,25 @@ namespace WarThunderChatTranslator.FloatWindow
             }
 
             RestartDisplayTimer();
+        }
+
+        /// <summary>
+        /// 外部强制隐藏（"游戏不在前台时隐藏浮窗"开关）：立即隐藏并阻止淡入。
+        /// 解除时不主动弹出，避免把失焦期间的旧消息重新推出来。
+        /// </summary>
+        public void SetForcedHidden(bool forced)
+        {
+            if (_forcedHidden == forced)
+            {
+                return;
+            }
+
+            _forcedHidden = forced;
+            if (forced)
+            {
+                _displayTimer.Stop();
+                HideNow();
+            }
         }
 
         /// <summary>

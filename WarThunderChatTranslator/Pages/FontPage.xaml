@@ -82,6 +82,12 @@
                                         Margin="0,0,10,0"
                                         Fill="{x:Bind AllyPreviewBrush, Mode=TwoWay}" />
                                     <Button Click="Ally_Button_Click" Content="选择颜色" />
+                                    <Button
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="Ally_Reset_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 #FF5472F2" />
                                 </StackPanel>
                             </labs:SettingsCard>
                             <labs:SettingsCard MaxWidth="2000" Header="敌军文本颜色">
@@ -96,6 +102,12 @@
                                         Margin="0,0,10,0"
                                         Fill="{x:Bind EnemyPreviewBrush, Mode=TwoWay}" />
                                     <Button Click="Enemy_Button_Click" Content="选择颜色" />
+                                    <Button
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="Enemy_Reset_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 #FFF25A54" />
                                 </StackPanel>
                             </labs:SettingsCard>
                             <labs:SettingsCard MaxWidth="2000" Header="系统文本颜色">
@@ -110,12 +122,18 @@
                                         Margin="0,0,10,0"
                                         Fill="{x:Bind SystemPreviewBrush, Mode=TwoWay}" />
                                     <Button Click="System_Button_Click" Content="选择颜色" />
+                                    <Button
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="System_Reset_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 #FFD4A017" />
                                 </StackPanel>
                             </labs:SettingsCard>
                             <labs:SettingsCard
                                 MaxWidth="2000"
                                 Header="中性文本颜色"
-                                Description="时间戳与敌军消息正文的颜色（浮窗用）">
+                                Description="时间戳与玩家手打消息正文的颜色（浮窗用）">
                                 <labs:SettingsCard.HeaderIcon>
                                     <FontIcon Glyph="&#xe8d3;" />
                                 </labs:SettingsCard.HeaderIcon>
@@ -127,6 +145,12 @@
                                         Margin="0,0,10,0"
                                         Fill="{x:Bind NeutralPreviewBrush, Mode=TwoWay}" />
                                     <Button Click="Neutral_Button_Click" Content="选择颜色" />
+                                    <Button
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="Neutral_Reset_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 #FFB6B6B6" />
                                 </StackPanel>
                             </labs:SettingsCard>
                             <labs:SettingsCard
@@ -156,6 +180,12 @@
                                         Margin="0,0,10,0"
                                         Fill="{x:Bind OutlinePreviewBrush, Mode=TwoWay}" />
                                     <Button Click="Outline_Button_Click" Content="选择颜色" />
+                                    <Button
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="OutlineColor_Reset_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 #FFFFFFFF" />
                                 </StackPanel>
                             </labs:SettingsCard>
                             <labs:SettingsCard
@@ -170,6 +200,7 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Slider
                                         x:Name="OutlineWidthSlider"
@@ -178,14 +209,24 @@
                                         Maximum="4"
                                         StepFrequency="0.5"
                                         Value="1" />
-                                    <TextBlock
-                                        x:Name="OutlineWidthValue"
+                                    <NumberBox
+                                        x:Name="OutlineWidthInput"
                                         Grid.Column="1"
-                                        Margin="16,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Text="1 像素" />
-                                    <Button
+                                        Width="88"
+                                        Margin="12,0,0,0"
+                                        Minimum="0.5"
+                                        Maximum="4"
+                                        SmallChange="0.5"
+                                        LargeChange="1"
+                                        SpinButtonPlacementMode="Hidden"
+                                        ValueChanged="OutlineWidthInput_ValueChanged" />
+                                    <TextBlock
                                         Grid.Column="2"
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Text="像素" />
+                                    <Button
+                                        Grid.Column="3"
                                         Margin="12,0,0,0"
                                         VerticalAlignment="Center"
                                         Click="OutlineWidthResetButton_Click"

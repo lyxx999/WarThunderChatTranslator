@@ -18,6 +18,9 @@ namespace WarThunderChatTranslator.Pages
     {
         private bool _initialized;
 
+        /// <summary>滑块与数字输入框互相回写，用此标记阻止事件成环。</summary>
+        private bool _syncingValues;
+
         public LocationPage()
         {
             this.InitializeComponent();
@@ -30,6 +33,7 @@ namespace WarThunderChatTranslator.Pages
             ShowOriginalToggle.Toggled += (s, e) => OnShowOriginalToggled();
             ShowChannelToggle.Toggled += (s, e) => OnShowChannelToggled();
             PinnedToggle.Toggled += (s, e) => OnPinnedToggled();
+            HideWhenInactiveToggle.Toggled += (s, e) => OnHideWhenInactiveToggled();
             ClearModeCombo.SelectionChanged += (s, e) => OnClearModeChanged();
         }
 
@@ -41,21 +45,64 @@ namespace WarThunderChatTranslator.Pages
             ShowOriginalToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_ShowOriginal"));
             ShowChannelToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_ShowChannelTag"));
             PinnedToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Pinned"));
+            HideWhenInactiveToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_HideWhenGameInactive"));
             ClearModeCombo.SelectedIndex = ApplicationConfig.GetSettings("FloatWindow_ClearMode") == "next" ? 1 : 0;
-            UpdateLabels();
+            SyncNumberInputs();
             _initialized = true;
         }
 
-        private void UpdateLabels()
+        /// <summary>把滑块当前值同步到右侧数字输入框。</summary>
+        private void SyncNumberInputs()
         {
-            DurationValue.Text = $"{(int)DurationSlider.Value} 秒";
-            FadeValue.Text = $"{FadeSlider.Value:0.0} 秒";
-            OpacityValue.Text = $"{(int)OpacitySlider.Value}%";
+            if (_syncingValues)
+            {
+                return;
+            }
+            _syncingValues = true;
+            try
+            {
+                // 显示"真正落盘"的取值：滑块可停在 0.75 这类中间值，但保存会按精度取整
+                DurationInput.Value = (int)DurationSlider.Value;
+                FadeInput.Value = Math.Round(FadeSlider.Value, 1);
+                OpacityInput.Value = (int)OpacitySlider.Value;
+            }
+            finally
+            {
+                _syncingValues = false;
+            }
+        }
+
+        /// <summary>
+        /// 数字输入框 → 滑块：只写滑块，保存与应用统一由 Slider.ValueChanged 那一条路径完成，
+        /// 回写触发的 ValueChanged 用 _syncingValues 挡掉，避免一次改动产生多次重排。
+        /// </summary>
+        private void ApplyNumberInput(Slider slider, double value)
+        {
+            if (double.IsNaN(value) || _syncingValues)
+            {
+                return;
+            }
+            slider.Value = value;
+        }
+
+        private void DurationInput_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            ApplyNumberInput(DurationSlider, args.NewValue);
+        }
+
+        private void FadeInput_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            ApplyNumberInput(FadeSlider, args.NewValue);
+        }
+
+        private void OpacityInput_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            ApplyNumberInput(OpacitySlider, args.NewValue);
         }
 
         private void OnDurationChanged()
         {
-            UpdateLabels();
+            SyncNumberInputs();
             if (_initialized)
             {
                 ApplicationConfig.SaveSettings("FloatWindow_DisplayDuration",
@@ -66,7 +113,7 @@ namespace WarThunderChatTranslator.Pages
 
         private void OnFadeChanged()
         {
-            UpdateLabels();
+            SyncNumberInputs();
             if (_initialized)
             {
                 ApplicationConfig.SaveSettings("FloatWindow_FadeSpeed",
@@ -77,7 +124,7 @@ namespace WarThunderChatTranslator.Pages
 
         private void OnOpacityChanged()
         {
-            UpdateLabels();
+            SyncNumberInputs();
             if (_initialized)
             {
                 ApplicationConfig.SaveSettings("FloatWindow_Opacity",
@@ -112,6 +159,16 @@ namespace WarThunderChatTranslator.Pages
             {
                 ApplicationConfig.SaveSettings("FloatWindow_Pinned",
                     PinnedToggle.IsOn ? "true" : "false");
+                FloatWindowController.Instance?.ApplySettings();
+            }
+        }
+
+        private void OnHideWhenInactiveToggled()
+        {
+            if (_initialized)
+            {
+                ApplicationConfig.SaveSettings("FloatWindow_HideWhenGameInactive",
+                    HideWhenInactiveToggle.IsOn ? "true" : "false");
                 FloatWindowController.Instance?.ApplySettings();
             }
         }

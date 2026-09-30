@@ -24,6 +24,9 @@ namespace WarThunderChatTranslator.Pages
         public Brush NeutralPreviewBrush { get; set; }
         public Brush OutlinePreviewBrush { get; set; }
 
+        /// <summary>描边滑块与数字输入框互相回写，用此标记阻止事件成环。</summary>
+        private bool _syncingOutlineWidth;
+
         public List<Tuple<string, FontFamily>> Fonts { get; set; }
 
         public FontPage()
@@ -58,7 +61,38 @@ namespace WarThunderChatTranslator.Pages
             FontStylePanel.SelectedIndex = GetFontStyleIndex(ApplicationConfig.GetSettings("FontStyle"));
             OutlineToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Outline"));
             OutlineWidthSlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_OutlineWidth"), 1);
-            OutlineWidthValue.Text = $"{OutlineWidthSlider.Value:0.0} 像素";
+            SyncOutlineWidthInput();
+        }
+
+        private void SyncOutlineWidthInput()
+        {
+            if (_syncingOutlineWidth)
+            {
+                return;
+            }
+            _syncingOutlineWidth = true;
+            try
+            {
+                // 显示"真正落盘"的取值（保存按一位小数取整）
+                OutlineWidthInput.Value = Math.Round(OutlineWidthSlider.Value, 1);
+            }
+            finally
+            {
+                _syncingOutlineWidth = false;
+            }
+        }
+
+        /// <summary>
+        /// 数字输入框 → 滑块：支持手动键入描边宽度。只写滑块，
+        /// 保存与应用统一走 Slider.ValueChanged 那一条路径；回写触发的回调用标记挡掉。
+        /// </summary>
+        private void OutlineWidthInput_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            if (double.IsNaN(args.NewValue) || _syncingOutlineWidth)
+            {
+                return;
+            }
+            OutlineWidthSlider.Value = args.NewValue;
         }
 
         private void OnOutlineToggled()
@@ -70,7 +104,7 @@ namespace WarThunderChatTranslator.Pages
 
         private void OnOutlineWidthChanged()
         {
-            OutlineWidthValue.Text = $"{OutlineWidthSlider.Value:0.0} 像素";
+            SyncOutlineWidthInput();
             ApplicationConfig.SaveSettings("FloatWindow_OutlineWidth",
                 OutlineWidthSlider.Value.ToString("0.0", CultureInfo.InvariantCulture));
             WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
@@ -105,14 +139,14 @@ namespace WarThunderChatTranslator.Pages
 
         private int GetFontStyleIndex(string fontStyle)
         {
-            return fontStyle switch
+            // 与 ComboBox 四项一一对应：误映射会让读回时把「加粗」降级成「粗体」并写回设置
+            switch ((fontStyle ?? string.Empty).Trim().ToLowerInvariant())
             {
-                "lighter" => 0,
-                "normal" => 1,
-                "bold" => 2,
-                "bolder" => 2,
-                _ => 1,
-            };
+                case "lighter": return 0;
+                case "bold": return 2;
+                case "bolder": return 3;
+                default: return 1;
+            }
         }
 
         public async Task LoadFontFamilies()
@@ -133,12 +167,18 @@ namespace WarThunderChatTranslator.Pages
             if (FontFamilyPanel.SelectedValue is FontFamily selectedFontFamily)
             {
                 ApplicationConfig.SaveSettings("FontFamily", selectedFontFamily.Source);
+                NotifyFloatWindow();
             }
         }
 
         private void FontSizePanel_TextChanged(object sender, NumberBoxValueChangedEventArgs e)
         {
-            ApplicationConfig.SaveSettings("FontSize", FontSizePanel.Value.ToString());
+            if (double.IsNaN(FontSizePanel.Value))
+            {
+                return;
+            }
+            ApplicationConfig.SaveSettings("FontSize", FontSizePanel.Value.ToString(CultureInfo.InvariantCulture));
+            NotifyFloatWindow();
         }
 
         private void FontStylePanel_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -146,7 +186,14 @@ namespace WarThunderChatTranslator.Pages
             if (FontStylePanel.SelectedItem is ComboBoxItem selectedItem)
             {
                 ApplicationConfig.SaveSettings("FontStyle", selectedItem.Tag.ToString());
+                NotifyFloatWindow();
             }
+        }
+
+        /// <summary>字体/字号/字重/颜色改动都要让浮窗立刻重排重绘。</summary>
+        private void NotifyFloatWindow()
+        {
+            WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
         }
 
         public static Color ToColor(string color)
@@ -161,6 +208,7 @@ namespace WarThunderChatTranslator.Pages
 
         private async void OnColorButtonClick(string settingKey, Brush previewBrush, Shape colorPreview)
         {
+            FontColor = GetFontColor(settingKey); // 选色初值 = 该项当前颜色
             var colorPickerDialog = new ColorPickerDialog(FontColor)
             {
                 XamlRoot = this.XamlRoot,
@@ -206,6 +254,33 @@ namespace WarThunderChatTranslator.Pages
         {
             OnColorButtonClick("FloatWindow_OutlineColor", OutlinePreviewBrush, OutlineColorPreview);
             OutlinePreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
+        }
+
+        // ---------- 颜色恢复默认（默认值与 App.InitializeDefaultSettings 一致） ----------
+
+        private void Ally_Reset_Click(object sender, RoutedEventArgs e) =>
+            ResetColor("AllyFontColor", "#FF5472F2", AllyColorPreview, b => AllyPreviewBrush = b);
+
+        private void Enemy_Reset_Click(object sender, RoutedEventArgs e) =>
+            ResetColor("EnemyFontColor", "#FFF25A54", EnemyColorPreview, b => EnemyPreviewBrush = b);
+
+        private void System_Reset_Click(object sender, RoutedEventArgs e) =>
+            ResetColor("SystemFontColor", "#FFD4A017", SystemColorPreview, b => SystemPreviewBrush = b);
+
+        private void Neutral_Reset_Click(object sender, RoutedEventArgs e) =>
+            ResetColor("NeutralFontColor", "#FFB6B6B6", NeutralColorPreview, b => NeutralPreviewBrush = b);
+
+        private void OutlineColor_Reset_Click(object sender, RoutedEventArgs e) =>
+            ResetColor("FloatWindow_OutlineColor", "#FFFFFFFF", OutlineColorPreview, b => OutlinePreviewBrush = b);
+
+        private void ResetColor(string settingKey, string defaultColor, Shape preview, Action<Brush> setBrush)
+        {
+            var brush = new SolidColorBrush(ToColor(defaultColor));
+            ApplicationConfig.SaveSettings(settingKey, defaultColor);
+            FontColor = brush.Color;
+            setBrush(brush);
+            preview.Fill = brush;
+            NotifyFloatWindow();
         }
 
     }

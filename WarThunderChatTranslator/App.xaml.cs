@@ -128,6 +128,7 @@ namespace WarThunderChatTranslator
                 { "FloatWindow_ShowOriginal", "false" },
                 { "FloatWindow_ShowChannelTag", "true" },
                 { "FloatWindow_Pinned", "false" },
+                { "FloatWindow_HideWhenGameInactive", "false" },
                 { "FloatWindow_Position", "" },
                 { "FloatWindow_Size", "" },
                 { "FloatWindow_Outline", "false" },

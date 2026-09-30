@@ -39,22 +39,33 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Slider
                                 x:Name="DurationSlider"
-                                Width="200"
+                                Width="180"
                                 Minimum="1"
                                 Maximum="60"
                                 StepFrequency="1"
                                 Value="3" />
-                            <TextBlock
-                                x:Name="DurationValue"
+                            <NumberBox
+                                x:Name="DurationInput"
                                 Grid.Column="1"
-                                Margin="16,0,0,0"
-                                VerticalAlignment="Center"
-                                Text="3 秒" />
-                            <Button
+                                Width="88"
+                                Margin="12,0,0,0"
+                                Minimum="1"
+                                Maximum="60"
+                                SmallChange="1"
+                                LargeChange="5"
+                                SpinButtonPlacementMode="Hidden"
+                                ValueChanged="DurationInput_ValueChanged" />
+                            <TextBlock
                                 Grid.Column="2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="秒" />
+                            <Button
+                                Grid.Column="3"
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
                                 Click="DurationResetButton_Click"
@@ -71,22 +82,33 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Slider
                                 x:Name="FadeSlider"
-                                Width="200"
+                                Width="180"
                                 Minimum="0.1"
                                 Maximum="3"
                                 StepFrequency="0.1"
                                 Value="0.5" />
-                            <TextBlock
-                                x:Name="FadeValue"
+                            <NumberBox
+                                x:Name="FadeInput"
                                 Grid.Column="1"
-                                Margin="16,0,0,0"
-                                VerticalAlignment="Center"
-                                Text="0.5 秒" />
-                            <Button
+                                Width="88"
+                                Margin="12,0,0,0"
+                                Minimum="0.1"
+                                Maximum="3"
+                                SmallChange="0.1"
+                                LargeChange="0.5"
+                                SpinButtonPlacementMode="Hidden"
+                                ValueChanged="FadeInput_ValueChanged" />
+                            <TextBlock
                                 Grid.Column="2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="秒" />
+                            <Button
+                                Grid.Column="3"
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
                                 Click="FadeResetButton_Click"
@@ -103,22 +125,33 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Slider
                                 x:Name="OpacitySlider"
-                                Width="200"
+                                Width="180"
                                 Minimum="0"
                                 Maximum="100"
                                 StepFrequency="5"
                                 Value="20" />
-                            <TextBlock
-                                x:Name="OpacityValue"
+                            <NumberBox
+                                x:Name="OpacityInput"
                                 Grid.Column="1"
-                                Margin="16,0,0,0"
-                                VerticalAlignment="Center"
-                                Text="20%" />
-                            <Button
+                                Width="88"
+                                Margin="12,0,0,0"
+                                Minimum="0"
+                                Maximum="100"
+                                SmallChange="5"
+                                LargeChange="10"
+                                SpinButtonPlacementMode="Hidden"
+                                ValueChanged="OpacityInput_ValueChanged" />
+                            <TextBlock
                                 Grid.Column="2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="%" />
+                            <Button
+                                Grid.Column="3"
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
                                 Click="OpacityResetButton_Click"
@@ -150,6 +183,15 @@
                         Description="浮窗常驻显示、不自动淡出，便于阅读历史消息（游戏中仍然不可点击）">
                         <ToggleSwitch
                             x:Name="PinnedToggle"
+                            OffContent="关"
+                            OnContent="开" />
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="游戏不在前台时隐藏浮窗"
+                        Description="切出战争雷霆后浮窗立即隐藏，回到游戏自动恢复；翻译器自己的界面在前台时浮窗保持可见，便于边改设置边看效果">
+                        <ToggleSwitch
+                            x:Name="HideWhenInactiveToggle"
                             OffContent="关"
                             OnContent="开" />
                     </labs:SettingsCard>
