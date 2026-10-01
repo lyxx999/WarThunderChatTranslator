@@ -1,3 +1,4 @@
+using GTranslate;
 using GTranslate.Results;
 using GTranslate.Translators;
 using NLog;
@@ -134,7 +135,81 @@ namespace WarThunderChatTranslator.Helpers
 
         public static async Task<ITranslationResult> TranslateAsync(string text)
         {
-            return await translator.TranslateAsync(text, ApplicationConfig.GetSettings("TargetLanguage"));
+            string toLanguage = ApplicationConfig.GetSettings("TargetLanguage");
+            var result = await translator.TranslateAsync(text, toLanguage);
+
+            if (TargetScriptMissing(text, result.Translation, toLanguage))
+            {
+                logger.Warn($"译文语种与目标语言({toLanguage})不符，回退原文：{text} => {result.Translation}");
+                return new PassthroughResult(text);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 语种兜底：原文里已经有目标语种的字符，译文却一个都没有 → 判定模型换了语种，丢弃译文。
+        /// 混合消息不受影响（「注意 enemy 位置」→「注意敌人位置」仍保留译文）。
+        /// 只校验非拉丁语种：模型跑偏时默认倒向英文，拉丁语系目标语言不会出现这种翻转，
+        /// 强行校验反而会误伤（例如原文含 "GG" 而译文是西里尔字母）。
+        /// </summary>
+        private static bool TargetScriptMissing(string source, string translation, string targetLanguage)
+        {
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(translation))
+            {
+                return false;
+            }
+
+            Func<char, bool> isTargetScript = TargetScriptOf(targetLanguage);
+            if (isTargetScript == null)
+            {
+                return false;
+            }
+
+            return source.Any(isTargetScript) && !translation.Any(isTargetScript);
+        }
+
+        private static Func<char, bool> TargetScriptOf(string targetLanguage)
+        {
+            switch (((targetLanguage ?? string.Empty).Trim().ToLowerInvariant()).Split('-')[0])
+            {
+                case "zh": return IsHan;
+                case "ja": return c => IsHan(c) || IsKana(c);
+                case "ko": return IsHangul;
+                case "ru":
+                case "uk":
+                case "be":
+                case "sr":
+                case "bg":
+                case "mk": return IsCyrillic;
+                default: return null;
+            }
+        }
+
+        private static bool IsHan(char c)
+        {
+            return (c >= 0x4E00 && c <= 0x9FFF) || (c >= 0x3400 && c <= 0x4DBF) || (c >= 0xF900 && c <= 0xFAFF);
+        }
+
+        private static bool IsKana(char c) => c >= 0x3040 && c <= 0x30FF;
+
+        private static bool IsHangul(char c) => c >= 0xAC00 && c <= 0xD7A3;
+
+        private static bool IsCyrillic(char c) => c >= 0x0400 && c <= 0x04FF;
+
+        private sealed class PassthroughResult : ITranslationResult
+        {
+            public string Translation { get; }
+            public string Source { get; }
+            public string Service { get; } = "原文回退";
+            public ILanguage SourceLanguage { get; }
+            public ILanguage TargetLanguage { get; }
+
+            public PassthroughResult(string source)
+            {
+                Source = source;
+                Translation = source;
+            }
         }
     }
 }

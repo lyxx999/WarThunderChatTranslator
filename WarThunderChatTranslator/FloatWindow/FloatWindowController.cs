@@ -43,8 +43,10 @@ namespace WarThunderChatTranslator.FloatWindow
         private bool _outlineEnabled;
         private string _outlineColor = "#FFFFFFFF";
         private double _outlineWidth = 1;
+        private double _lineSpacing; // 行间距（像素，加在字体自然行高之上，0=默认）
         private string _clearMode = "exit"; // "exit"=退出对局立即清空，"next"=下一局开始时清空
         private bool _enterTogglePin = true; // 长按回车切换浮窗固定显示（仅游戏前台时生效）
+        private int _enterHoldMs = EnterHoldWatcher.DefaultHoldThresholdMs; // 长按回车判定阈值
         private bool _hideWhenGameInactive; // 游戏（且翻译器自己）都不在前台时隐藏浮窗
 
         public bool Enabled => _enabled;
@@ -429,6 +431,7 @@ namespace WarThunderChatTranslator.FloatWindow
                     _enterWatcher = new EnterHoldWatcher();
                     _enterWatcher.LongPressEnter += OnLongPressEnter;
                 }
+                _enterWatcher.HoldThresholdMs = _enterHoldMs;
                 _enterWatcher.Start();
             }
             else
@@ -489,9 +492,12 @@ namespace WarThunderChatTranslator.FloatWindow
             _outlineEnabled = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Outline"));
             _outlineColor = ApplicationConfig.GetSettings("FloatWindow_OutlineColor") ?? "#FFFFFFFF";
             _outlineWidth = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_OutlineWidth"), 1);
+            _lineSpacing = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_LineSpacing"), 0);
             _clearMode = ApplicationConfig.GetSettings("FloatWindow_ClearMode") ?? "exit";
             _enterTogglePin = ApplicationConfig.GetSettings("FloatWindow_TogglePinByEnter") == null
                 || ParseBool(ApplicationConfig.GetSettings("FloatWindow_TogglePinByEnter"));
+            _enterHoldMs = ParseInt(ApplicationConfig.GetSettings("FloatWindow_EnterHoldMs"),
+                EnterHoldWatcher.DefaultHoldThresholdMs);
             _hideWhenGameInactive = ParseBool(ApplicationConfig.GetSettings("FloatWindow_HideWhenGameInactive"));
         }
 
@@ -516,6 +522,7 @@ namespace WarThunderChatTranslator.FloatWindow
                 fontSize,
                 fontName,
                 fontStyle,
+                _lineSpacing,
                 new FloatPalette
                 {
                     AllyBrush = ParseBrush(ApplicationConfig.GetSettings("AllyFontColor"), "#FF5472F2"),
@@ -541,6 +548,13 @@ namespace WarThunderChatTranslator.FloatWindow
         private static bool ParseBool(string value)
         {
             return bool.TryParse(value, out bool b) && b;
+        }
+
+        private static int ParseInt(string value, int fallback)
+        {
+            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v) && v > 0
+                ? v
+                : fallback;
         }
 
         private static Brush ParseBrush(string argb, string fallback)

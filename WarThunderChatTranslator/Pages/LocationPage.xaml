@@ -25,7 +25,7 @@
             VerticalAlignment="Stretch"
             AutomationProperties.HeadingLevel="1"
             Style="{StaticResource TitleTextBlockStyle}"
-            Text="位置和布局" />
+            Text="浮窗设置" />
 
         <ScrollViewer Grid.Row="1">
             <Grid Padding="0,0,20,0" RowSpacing="0">
@@ -33,7 +33,7 @@
                     <labs:SettingsCard
                         MaxWidth="2000"
                         Header="浮窗显示时长"
-                        Description="新消息出现后，浮窗保持显示的时间（秒），到时自动淡出">
+                        Description="最新一条消息出现后，浮窗再显示这么久（秒）然后自动淡出；期间来了更新的消息才重新计时，其他刷新不延长">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />

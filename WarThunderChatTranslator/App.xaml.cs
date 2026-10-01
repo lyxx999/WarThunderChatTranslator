@@ -134,8 +134,10 @@ namespace WarThunderChatTranslator
                 { "FloatWindow_Outline", "false" },
                 { "FloatWindow_OutlineColor", "#FFFFFFFF" },
                 { "FloatWindow_OutlineWidth", "1" },
+                { "FloatWindow_LineSpacing", "0" },
                 { "FloatWindow_ClearMode", "exit" },
                 { "FloatWindow_TogglePinByEnter", "true" },
+                { "FloatWindow_EnterHoldMs", "500" },
             };
 
             foreach (var setting in defaultSettings)

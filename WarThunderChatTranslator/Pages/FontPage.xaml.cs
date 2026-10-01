@@ -27,6 +27,9 @@ namespace WarThunderChatTranslator.Pages
         /// <summary>描边滑块与数字输入框互相回写，用此标记阻止事件成环。</summary>
         private bool _syncingOutlineWidth;
 
+        /// <summary>行间距滑块与数字输入框的回写防环标记。</summary>
+        private bool _syncingLineSpacing;
+
         public List<Tuple<string, FontFamily>> Fonts { get; set; }
 
         public FontPage()
@@ -38,6 +41,7 @@ namespace WarThunderChatTranslator.Pages
             // lambda 接线（WinAppSDK 1.5 中 Slider/ToggleSwitch 事件参数类型不便显式引用）
             OutlineToggle.Toggled += (s, e) => OnOutlineToggled();
             OutlineWidthSlider.ValueChanged += (s, e) => OnOutlineWidthChanged();
+            LineSpacingSlider.ValueChanged += (s, e) => OnLineSpacingChanged();
         }
 
         private void InitializeFontColors()
@@ -62,6 +66,8 @@ namespace WarThunderChatTranslator.Pages
             OutlineToggle.IsOn = ParseBool(ApplicationConfig.GetSettings("FloatWindow_Outline"));
             OutlineWidthSlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_OutlineWidth"), 1);
             SyncOutlineWidthInput();
+            LineSpacingSlider.Value = ParseDouble(ApplicationConfig.GetSettings("FloatWindow_LineSpacing"), 0);
+            SyncLineSpacingInput();
         }
 
         private void SyncOutlineWidthInput()
@@ -120,6 +126,57 @@ namespace WarThunderChatTranslator.Pages
             else
             {
                 OutlineWidthSlider.Value = 1;
+            }
+        }
+
+        private void SyncLineSpacingInput()
+        {
+            if (_syncingLineSpacing)
+            {
+                return;
+            }
+            _syncingLineSpacing = true;
+            try
+            {
+                LineSpacingInput.Value = Math.Round(LineSpacingSlider.Value, 1);
+            }
+            finally
+            {
+                _syncingLineSpacing = false;
+            }
+        }
+
+        /// <summary>
+        /// 数字输入框 → 滑块：支持手动键入行间距。只写滑块，
+        /// 保存与应用统一走 Slider.ValueChanged 那一条路径。
+        /// </summary>
+        private void LineSpacingInput_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            if (double.IsNaN(args.NewValue) || _syncingLineSpacing)
+            {
+                return;
+            }
+            LineSpacingSlider.Value = args.NewValue;
+        }
+
+        private void OnLineSpacingChanged()
+        {
+            SyncLineSpacingInput();
+            ApplicationConfig.SaveSettings("FloatWindow_LineSpacing",
+                LineSpacingSlider.Value.ToString("0.0", CultureInfo.InvariantCulture));
+            WarThunderChatTranslator.FloatWindow.FloatWindowController.Instance?.ApplySettings();
+        }
+
+        private void LineSpacingResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 已在默认值时 ValueChanged 不触发，手动补一次写入
+            if (LineSpacingSlider.Value == 0)
+            {
+                OnLineSpacingChanged();
+            }
+            else
+            {
+                LineSpacingSlider.Value = 0;
             }
         }
 

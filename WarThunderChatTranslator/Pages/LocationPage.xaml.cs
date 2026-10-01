@@ -11,7 +11,7 @@ using WarThunderChatTranslator.FloatWindow;
 namespace WarThunderChatTranslator.Pages
 {
     /// <summary>
-    /// 位置和布局：聊天浮窗的行为设置（时长/透明度/原文/固定显示）。
+    /// 浮窗设置：聊天浮窗的行为设置（时长/透明度/原文/固定显示）。
     /// 文字颜色与描边（开关/颜色/宽度）统一由「字体和样式」页管理。
     /// </summary>
     public sealed partial class LocationPage : Page

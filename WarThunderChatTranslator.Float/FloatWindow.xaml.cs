@@ -48,7 +48,23 @@ namespace WarThunderChatTranslator.FloatWindow
         private Color _outlineColor = Colors.White;
         private double _outlineWidth = 1;
 
+        // 行间距：行高 = 字号 + 这个像素数（0 = 上下两排字刚好贴在一起）
+        private const double OriginalFontSize = 12;
+        private double _lineSpacing;
+
+        // 应用到主行/原文行/8 份描边副本的行高（必须完全一致，否则换行位置会错开）
+        private double _rowLineHeight = 14;
+        private double _originalLineHeight = 12;
+
+        // 淡出调度：以"最新一条消息的身份"为锚，只有锚点前进才重新计时（Environment.TickCount64 基准）
+        private long _anchorKey = long.MinValue;
+        private long _fadeDeadlineMs;
+
         private readonly DispatcherTimer _displayTimer = new DispatcherTimer();
+
+        // 淡出兜底：隐藏不能只依赖 DoubleAnimation.Completed（回调可能被吞掉，
+        // 那样窗口会弹回全不透明且再无计时器，表现为"永远不淡出"）
+        private readonly DispatcherTimer _hideSafetyTimer = new DispatcherTimer();
 
         // 文字配色（来自「字体和样式」页；默认值取色自游戏内聊天）
         private Brush _allyBrush;
@@ -90,12 +106,15 @@ namespace WarThunderChatTranslator.FloatWindow
             _systemBrush = MakeBrush("#FFD4A017");
             _neutralBrush = MakeBrush("#FFB6B6B6");
 
-            _displayTimer.Tick += (s, e) =>
+            _displayTimer.Tick += DisplayTimer_Tick;
+
+            // 淡出动画的兜底：到时无论如何把窗口真正隐藏掉
+            _hideSafetyTimer.Tick += (s, e) =>
             {
-                _displayTimer.Stop();
-                if (!_pinned)
+                _hideSafetyTimer.Stop();
+                if (_fadeRunning)
                 {
-                    FadeOut();
+                    FinishFadeOut();
                 }
             };
 
@@ -113,7 +132,7 @@ namespace WarThunderChatTranslator.FloatWindow
 
         public void ApplySettings(double displayDuration, double fadeSpeed, double opacity,
             bool showOriginal, bool showChannelTag, bool pinned, double fontSize, string fontFamilyName,
-            string fontStyle,
+            string fontStyle, double lineSpacing,
             FloatPalette palette,
             bool outline, string outlineColor, double outlineWidth)
         {
@@ -158,6 +177,10 @@ namespace WarThunderChatTranslator.FloatWindow
             // 文字样式与浏览器面板共用同一个设置项（CSS 字面量）
             TextElement.SetFontWeight(ContentGrid, ParseFontWeight(fontStyle));
 
+            // 行间距：0 = 上下两排字刚好贴在一起
+            _lineSpacing = Math.Max(0, Math.Min(lineSpacing, 24));
+            RefreshLineMetrics();
+
             if (palette != null)
             {
                 if (palette.AllyBrush != null) _allyBrush = palette.AllyBrush;
@@ -174,6 +197,12 @@ namespace WarThunderChatTranslator.FloatWindow
             {
                 _displayTimer.Stop();
             }
+            else if (IsVisible)
+            {
+                // 改设置要立即生效：以当前时刻为起点重新给一段显示时长
+                _fadeDeadlineMs = NowMs() + ToMs(_displayDuration);
+                ScheduleFadeOut();
+            }
         }
 
         /// <summary>设置里的文字样式（与面板 CSS 同一套字面量）映射到 WPF 字重。</summary>
@@ -186,6 +215,20 @@ namespace WarThunderChatTranslator.FloatWindow
                 case "bolder": return FontWeights.ExtraBold;
                 default: return FontWeights.Normal;
             }
+        }
+
+        /// <summary>
+        /// 按当前字号重算行高：行高 = 字号 + 行间距。字号就是汉字方块的高度，所以 0 时
+        /// 上下两排字刚好贴在一起，之后每加 1 像素都看得见。
+        /// 不能拿字体自然行高当下限：实测它约 1.33 倍字号（中文字体更大），
+        /// 那样 0 就已经很宽，往下没有空间——必须配 LineStackingStrategy=BlockLineHeight
+        /// 才能让 WPF 真把行高压到自然行高以下（MaxHeight 会被夹回自然行高）。
+        /// </summary>
+        private void RefreshLineMetrics()
+        {
+            double size = TextElement.GetFontSize(ContentGrid);
+            _rowLineHeight = size + _lineSpacing;
+            _originalLineHeight = OriginalFontSize + _lineSpacing;
         }
 
         /// <summary>按当前透明度生成背景刷（#101418 + 设定不透明度）。</summary>
@@ -239,6 +282,7 @@ namespace WarThunderChatTranslator.FloatWindow
             double od = ow * 0.70710678; // 对角方向偏移 = 宽 / √2
             var outlineBrush = _outline ? new SolidColorBrush(_outlineColor) : null;
             var outlineVis = _outline ? Visibility.Visible : Visibility.Collapsed;
+            var rowGap = new Thickness(0, 0, 0, _lineSpacing);
 
             foreach (var m in pool) // 时间序、最新在最后
             {
@@ -249,6 +293,9 @@ namespace WarThunderChatTranslator.FloatWindow
                     Line = string.Concat(segments.Select(s => s.Text)),
                     OriginalLine = m.Msg,
                     OriginalVisibility = _showOriginal ? Visibility.Visible : Visibility.Collapsed,
+                    RowLineHeight = _rowLineHeight,
+                    OriginalLineHeight = _originalLineHeight,
+                    RowGap = rowGap,
                     OutlineColor = outlineBrush,
                     OutlineVisibility = outlineVis,
                     Ox_E = ow, Oy_E = 0,
@@ -262,21 +309,30 @@ namespace WarThunderChatTranslator.FloatWindow
                 });
             }
 
+            // 这批消息里"最新一条"的身份：淡出倒计时只认它有没有前进
+            long key = NewestKey(pool);
+            bool advanced = key != _anchorKey;
+
             MessageList.ItemsSource = items;
             Placeholder.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-            // 来新消息：回到底部显示最新（规范行为），等布局完成后再滚
-            _userScrolledUp = false;
-            Dispatcher.BeginInvoke(new Action(ScrollToBottom), DispatcherPriority.Background);
+            if (advanced)
+            {
+                // 确有新消息：回到底部显示最新（规范行为），等布局完成后再滚
+                _userScrolledUp = false;
+                Dispatcher.BeginInvoke(new Action(ScrollToBottom), DispatcherPriority.Background);
+            }
 
             if (_forcedHidden)
             {
                 // 游戏不在前台：只刷新内容，不弹出（解除后由调用方决定是否立刻恢复显示）
+                _anchorKey = key;
                 return;
             }
 
             if (_pinned)
             {
+                _anchorKey = key;
                 _displayTimer.Stop();
                 if (!IsVisible)
                 {
@@ -284,9 +340,17 @@ namespace WarThunderChatTranslator.FloatWindow
                 }
                 else if (_fadeRunning)
                 {
-                    CancelFadeBack();
+                    CancelFadeOut();
                 }
                 return;
+            }
+
+            // 只有"来了更新的一条消息"或"窗口刚从隐藏弹出"才重新计时；
+            // 同一批消息的重复刷新（改设置重渲染等）不再延长显示时间。
+            if (advanced || !IsVisible)
+            {
+                _anchorKey = key;
+                _fadeDeadlineMs = NowMs() + ToMs(_displayDuration);
             }
 
             if (!IsVisible)
@@ -295,10 +359,25 @@ namespace WarThunderChatTranslator.FloatWindow
             }
             else if (_fadeRunning)
             {
-                CancelFadeBack();
+                CancelFadeOut();
             }
 
-            RestartDisplayTimer();
+            ScheduleFadeOut();
+        }
+
+        /// <summary>取这批消息中最新一条的身份标识（时间为主、ID 次之）；空批返回 -1。</summary>
+        private static long NewestKey(List<ChatMessage> pool)
+        {
+            long best = -1;
+            foreach (var m in pool)
+            {
+                long k = ((long)m.Time << 32) | (uint)m.Id;
+                if (k > best)
+                {
+                    best = k;
+                }
+            }
+            return best;
         }
 
         /// <summary>
@@ -362,15 +441,16 @@ namespace WarThunderChatTranslator.FloatWindow
         {
             _userScrolledUp = false;
             MessageList.ItemsSource = null;
-            if (_pinned)
+            _anchorKey = long.MinValue; // 清空之后，下一批消息一律按"新消息"起算
+            if (_pinned || !IsVisible)
             {
                 _displayTimer.Stop();
             }
             else
             {
                 // 非固定模式：重启显示计时，"等待消息…"占位也按显示时长自动淡出
-                // （修复：之前无条件停表，退出对局后浮窗会一直挂着不消失）
-                RestartDisplayTimer();
+                _fadeDeadlineMs = NowMs() + ToMs(_displayDuration);
+                ScheduleFadeOut();
             }
             if (IsVisible)
             {
@@ -381,6 +461,7 @@ namespace WarThunderChatTranslator.FloatWindow
         private void FadeIn()
         {
             CancelAnimation();
+            _hideSafetyTimer.Stop();
             _fadeRunning = true;
             Opacity = 0;
             if (!IsVisible)
@@ -391,21 +472,47 @@ namespace WarThunderChatTranslator.FloatWindow
             BeginAnimation(OpacityProperty, anim);
         }
 
+        /// <summary>
+        /// 淡出：动画只负责视觉效果，隐藏由 Completed 或兜底计时器完成（谁先到算谁）。
+        /// 动画用 HoldEnd：万一两个回调都没来，窗口也停在透明态而不是弹回全不透明。
+        /// </summary>
         private void FadeOut()
         {
-            _fadeRunning = true;
-            var anim = new DoubleAnimation(0, TimeSpan.FromSeconds(_fadeSpeed)) { FillBehavior = FillBehavior.Stop };
-            anim.Completed += (s, e) =>
+            if (!IsVisible)
             {
-                _fadeRunning = false;
-                Hide();
-            };
+                return;
+            }
+
+            _hideSafetyTimer.Stop();
+            _fadeRunning = true;
+            var anim = new DoubleAnimation(0, TimeSpan.FromSeconds(_fadeSpeed)) { FillBehavior = FillBehavior.HoldEnd };
+            anim.Completed += (s, e) => FinishFadeOut();
             BeginAnimation(OpacityProperty, anim);
+
+            _hideSafetyTimer.Interval = TimeSpan.FromSeconds(_fadeSpeed) + TimeSpan.FromMilliseconds(400);
+            _hideSafetyTimer.Start();
+        }
+
+        /// <summary>淡出收尾：真正隐藏窗口并复位状态（幂等，动画回调与兜底计时器共用）。</summary>
+        private void FinishFadeOut()
+        {
+            if (!_fadeRunning)
+            {
+                return;
+            }
+
+            _fadeRunning = false;
+            _hideSafetyTimer.Stop();
+            _displayTimer.Stop();
+            Hide(); // 先隐藏再撤动画、复位基值：避免中间渲染出一帧全不透明
+            CancelAnimation();
+            Opacity = 1.0;
         }
 
         /// <summary>淡出过程中来新消息：取消淡出、回到完全可见。</summary>
-        private void CancelFadeBack()
+        private void CancelFadeOut()
         {
+            _hideSafetyTimer.Stop();
             CancelAnimation();
             _fadeRunning = false;
             Opacity = 1.0;
@@ -416,18 +523,53 @@ namespace WarThunderChatTranslator.FloatWindow
             BeginAnimation(OpacityProperty, (AnimationTimeline)null);
         }
 
-        private void RestartDisplayTimer()
+        private void DisplayTimer_Tick(object sender, EventArgs e)
         {
-            _displayTimer.Interval = TimeSpan.FromSeconds(_displayDuration);
+            if (_pinned || _forcedHidden)
+            {
+                _displayTimer.Stop();
+                return;
+            }
+
+            long remain = _fadeDeadlineMs - NowMs();
+            if (remain > 0)
+            {
+                // 期间来了更新的一条消息：按新的截止时刻续期
+                _displayTimer.Interval = TimeSpan.FromMilliseconds(remain);
+                return;
+            }
+
             _displayTimer.Stop();
+            FadeOut();
+        }
+
+        /// <summary>按"淡出截止时刻"挂定时器；已到期则立即淡出。</summary>
+        private void ScheduleFadeOut()
+        {
+            long remain = _fadeDeadlineMs - NowMs();
+            if (remain <= 0)
+            {
+                FadeOut();
+                return;
+            }
+
+            _displayTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(20, remain));
             _displayTimer.Start();
         }
+
+        private static long NowMs() => Environment.TickCount64;
+
+        private static long ToMs(double seconds) => (long)Math.Round(Math.Max(0, seconds) * 1000);
 
         /// <summary>立即隐藏并停止一切计时/动画（浮窗被关闭时调用）。</summary>
         public void HideNow()
         {
-            CancelAnimation();
             _displayTimer.Stop();
+            _hideSafetyTimer.Stop();
+            _fadeRunning = false;
+            _anchorKey = long.MinValue;
+            CancelAnimation();
+            Opacity = 1.0;
             if (IsVisible)
             {
                 Hide();

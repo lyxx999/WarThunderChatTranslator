@@ -70,8 +70,7 @@
                         <NavigationViewItem
                             Margin="0,0,12,0"
                             helpers:NavigationHelperEx.NavigateTo="InteractPage"
-                            Content="互动和操作"
-                            IsEnabled="False">
+                            Content="互动和操作">
                             <NavigationViewItem.Icon>
                                 <BitmapIcon ShowAsMonochrome="False" UriSource="ms-appx:///Assets/FluentIcons/Interact.ico" />
                             </NavigationViewItem.Icon>
@@ -80,7 +79,7 @@
                         <NavigationViewItem
                             Margin="0,0,12,0"
                             helpers:NavigationHelperEx.NavigateTo="LocationPage"
-                            Content="位置和布局">
+                            Content="浮窗设置">
                             <NavigationViewItem.Icon>
                                 <BitmapIcon ShowAsMonochrome="False" UriSource="ms-appx:///Assets/FluentIcons/Size.ico" />
                             </NavigationViewItem.Icon>

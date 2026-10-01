@@ -15,6 +15,14 @@
         SnapsToDevicePixels="True"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <!-- 行间距：主行与 8 份描边副本必须共用同一个行高，否则换行位置会错开。
+             BlockLineHeight = 严格用 LineHeight（可以小于字体自然行高，0 时才真的贴在一起） -->
+        <Style x:Key="RowTextStyle" TargetType="TextBlock">
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+            <Setter Property="LineHeight" Value="{Binding RowLineHeight}" />
+        </Style>
+    </Window.Resources>
     <Border x:Name="RootBorder"
             Margin="6"
             CornerRadius="10"
@@ -41,10 +49,11 @@
                 <ItemsControl x:Name="MessageList">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="0,0,0,8">
+                            <StackPanel Margin="{Binding RowGap}">
                                 <Grid>
                                     <!-- 描边：8 方向偏移副本（关闭时 Collapsed） -->
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -52,6 +61,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -59,6 +69,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -66,6 +77,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -73,6 +85,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -80,6 +93,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -87,6 +101,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -94,6 +109,7 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Line}" TextWrapping="Wrap"
+                                               Style="{StaticResource RowTextStyle}"
                                                Foreground="{Binding OutlineColor}"
                                                Visibility="{Binding OutlineVisibility}">
                                         <TextBlock.RenderTransform>
@@ -102,11 +118,14 @@
                                     </TextBlock>
                                     <!-- 主文字（顶层）：分段着色，各段颜色由代码给出 -->
                                     <fw:SegmentTextBlock Segments="{Binding Segments}"
+                                                         Style="{StaticResource RowTextStyle}"
                                                          TextWrapping="Wrap" />
                                 </Grid>
                                 <TextBlock Text="{Binding OriginalLine}"
-                                           TextWrapping="Wrap"
                                            FontSize="12"
+                                           LineHeight="{Binding OriginalLineHeight}"
+                                           Style="{StaticResource RowTextStyle}"
+                                           TextWrapping="Wrap"
                                            Foreground="#80FFFFFF"
                                            Visibility="{Binding OriginalVisibility}" />
                             </StackPanel>

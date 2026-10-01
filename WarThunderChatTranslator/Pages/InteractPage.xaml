@@ -33,11 +33,54 @@
                     <labs:SettingsCard
                         MaxWidth="2000"
                         Header="长按回车切换浮窗固定"
-                        Description="游戏在前台时，按住回车键 0.5 秒以上再松开，即切换浮窗固定显示的开/关；游戏不在前台时不响应">
+                        Description="游戏在前台时，把回车按住到设定时长再松开，即切换浮窗固定显示的开/关；游戏不在前台时不响应">
                         <ToggleSwitch
                             x:Name="EnterTogglePinToggle"
                             OffContent="关"
                             OnContent="开" />
+                    </labs:SettingsCard>
+                    <labs:SettingsCard
+                        MaxWidth="2000"
+                        Header="长按回车时长"
+                        Description="回车按住多久算作一次「长按」；设得太短会和普通聊天输入误触发">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Slider
+                                x:Name="HoldSlider"
+                                Width="180"
+                                Minimum="0.2"
+                                Maximum="3"
+                                StepFrequency="0.1"
+                                Value="0.5" />
+                            <NumberBox
+                                x:Name="HoldInput"
+                                Grid.Column="1"
+                                Width="88"
+                                Margin="12,0,0,0"
+                                Minimum="0.2"
+                                Maximum="3"
+                                SmallChange="0.1"
+                                LargeChange="0.5"
+                                SpinButtonPlacementMode="Hidden"
+                                ValueChanged="HoldInput_ValueChanged" />
+                            <TextBlock
+                                Grid.Column="2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="秒" />
+                            <Button
+                                Grid.Column="3"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="HoldResetButton_Click"
+                                Content="恢复默认"
+                                ToolTipService.ToolTip="恢复为 0.5 秒" />
+                        </Grid>
                     </labs:SettingsCard>
                 </StackPanel>
             </Grid>

@@ -70,6 +70,52 @@
                                     <ComboBoxItem Tag="bolder">加粗</ComboBoxItem>
                                 </ComboBox>
                             </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
+                                Header="行间距"
+                                Description="浮窗行与行之间的额外高度（像素）：0 = 两排字刚好贴在一起，约 5 = 字体默认行高，往上更松散">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8d3;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider
+                                        x:Name="LineSpacingSlider"
+                                        Width="200"
+                                        Minimum="0"
+                                        Maximum="12"
+                                        StepFrequency="0.5"
+                                        Value="0" />
+                                    <NumberBox
+                                        x:Name="LineSpacingInput"
+                                        Grid.Column="1"
+                                        Width="88"
+                                        Margin="12,0,0,0"
+                                        Minimum="0"
+                                        Maximum="12"
+                                        SmallChange="0.5"
+                                        LargeChange="1"
+                                        SpinButtonPlacementMode="Hidden"
+                                        ValueChanged="LineSpacingInput_ValueChanged" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Text="像素" />
+                                    <Button
+                                        Grid.Column="3"
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="LineSpacingResetButton_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 0 像素（贴在一起）" />
+                                </Grid>
+                            </labs:SettingsCard>
                             <labs:SettingsCard MaxWidth="2000" Header="友军文本颜色">
                                 <labs:SettingsCard.HeaderIcon>
                                     <FontIcon Glyph="&#xe8d3;" />

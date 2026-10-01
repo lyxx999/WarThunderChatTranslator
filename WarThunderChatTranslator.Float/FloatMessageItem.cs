@@ -20,6 +20,17 @@ namespace WarThunderChatTranslator.FloatWindow
 
         public Visibility OriginalVisibility { get; set; }
 
+        // ---------- 行间距（由代码按当前字号算好，描边副本必须与主文字完全一致） ----------
+
+        /// <summary>主行行高（字体自然行高 + 用户设定的额外行间距）。</summary>
+        public double RowLineHeight { get; set; }
+
+        /// <summary>原文行行高（原文固定 12 像素字号）。</summary>
+        public double OriginalLineHeight { get; set; }
+
+        /// <summary>消息之间的间隔（底部外边距）。</summary>
+        public Thickness RowGap { get; set; }
+
         // ---------- 描边（8 方向偏移副本，关闭时 Collapsed） ----------
 
         /// <summary>描边颜色（描边关闭时为 null）</summary>

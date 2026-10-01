@@ -18,7 +18,10 @@ namespace WarThunderChatTranslator.Helpers
     {
         private const string DefaultSystemPrompt =
             "You are a real-time combat chat translator dedicated to the online game War Thunder. " +
+            "Target language: {language}. " +
             "Translate the user's message (from any source language) into {language}. " +
+            "If the message is already written in {language}, output it unchanged: never rewrite it and never switch to another language. " +
+            "Never answer in English unless the target language is English. " +
             "Output ONLY the translation itself — no explanations, no quotes, no prefixes, no extra lines. " +
             "Keep the tone short and casual, like live battle chat. Preserve emojis and symbols. " +
             "Never translate vehicle names, map names, or player nicknames/IDs — keep them exactly as written. " +
@@ -35,8 +38,7 @@ namespace WarThunderChatTranslator.Helpers
             "DPM=每分钟伤害, alpha strike=爆发伤害, TTK=击杀时间; " +
             "re-rack/reload=装填, traverse=炮塔回转, eject=跳车, suicide=自爆, grief=捣乱, AFK=挂机; " +
             "RNG=脸/运气, gg=打得漂亮, gl=祝好运, 1v1=单挑; " +
-            "team/clan/squad=车队/军团/小队; nations=国籍+系 (American=美系, German=德系, Soviet=苏系, etc.). " +
-            "If the message is already in the target language, output it unchanged.";
+            "team/clan/squad=车队/军团/小队; nations=国籍+系 (American=美系, German=德系, Soviet=苏系, etc.).";
 
         private readonly HttpClient _client;
         private readonly string _baseUrl;
@@ -74,7 +76,7 @@ namespace WarThunderChatTranslator.Helpers
                 return new CustomAIResult(text, text, Name, null, null);
             }
 
-            var target = string.IsNullOrWhiteSpace(toLanguage) ? "auto" : toLanguage;
+            var target = ResolveLanguageName(toLanguage);
             var systemPrompt = _systemPrompt.Replace("{language}", target);
 
             var payload = new JObject
@@ -147,6 +149,36 @@ namespace WarThunderChatTranslator.Helpers
         public bool IsLanguageSupported(string language) => true;
 
         public bool IsLanguageSupported(ILanguage language) => true;
+
+        /// <summary>
+        /// 语言代码换成语言名（zh-CN → Chinese (中文)）。裸代码对模型来说太弱：
+        /// "Translate into zh-CN" 会让小模型偶尔把中文原文当成待翻译素材翻成英文。
+        /// </summary>
+        private static string ResolveLanguageName(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return "auto";
+            }
+
+            string trimmed = code.Trim();
+            return MatchLanguageName(trimmed)
+                ?? (trimmed.Contains('-') ? MatchLanguageName(trimmed.Split('-')[0]) : null)
+                ?? trimmed;
+        }
+
+        private static string MatchLanguageName(string code)
+        {
+            foreach (var language in Language.LanguageDictionary.Values)
+            {
+                if (string.Equals(language.ISO6391, code, StringComparison.OrdinalIgnoreCase))
+                {
+                    return language.Name + " (" + language.NativeName + ")";
+                }
+            }
+
+            return null;
+        }
 
         private static string Truncate(string s)
         {

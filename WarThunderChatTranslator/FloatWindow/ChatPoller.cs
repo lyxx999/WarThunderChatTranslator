@@ -51,6 +51,16 @@ namespace WarThunderChatTranslator.FloatWindow
             t?.Dispose();
         }
 
+        /// <summary>会话切换（进/出对局、游戏关闭）：清空时间水位与已见 ID 集合。</summary>
+        private void ResetSessionState()
+        {
+            lock (_gate)
+            {
+                _seenIds.Clear();
+                _lastMaxTime = 0;
+            }
+        }
+
         private async Task TickAsync()
         {
             lock (_gate)
@@ -82,17 +92,21 @@ namespace WarThunderChatTranslator.FloatWindow
                 long maxTime = messages.Max(m => m.Time);
                 lock (_gate)
                 {
-                    // 游戏重启：消息时间回退 → 重置已见集合，避免漏报
-                    if (_lastMaxTime > 0 && maxTime < _lastMaxTime)
+                    // 时间回退说明本批是上一局/上次会话的残留（早已显示过），只需静默重新播种。
+                    // 绝不能把它当成"一批新消息"上报：轮询 2 秒一轮，而显示时长可以到 60 秒，
+                    // 每轮都上报就会把浮窗的淡出倒计时一路往前推，浮窗永远不淡出。
+                    // （游戏重启/换局导致的 ID 复用，由下面的对局边界归零负责。）
+                    bool regressed = _lastMaxTime > 0 && maxTime < _lastMaxTime;
+                    if (regressed)
                     {
                         _seenIds.Clear();
                     }
-                    _lastMaxTime = Math.Max(_lastMaxTime, maxTime);
+                    _lastMaxTime = maxTime;
 
                     anyNew = false;
                     foreach (var m in messages)
                     {
-                        if (_seenIds.Add(m.Id))
+                        if (!regressed && _seenIds.Add(m.Id))
                         {
                             anyNew = true;
                         }
@@ -100,13 +114,12 @@ namespace WarThunderChatTranslator.FloatWindow
 
                     if (_seenIds.Count > 1000)
                     {
-                        // 防止无界增长：只保留本轮消息
+                        // 防止无界增长：只保留本轮消息（同样不制造"新消息"）
                         _seenIds.Clear();
                         foreach (var m in messages)
                         {
                             _seenIds.Add(m.Id);
                         }
-                        anyNew = true;
                     }
                 }
 
@@ -142,27 +155,36 @@ namespace WarThunderChatTranslator.FloatWindow
             bool? state = await ChatService.ProbeMatchStateAsync();
             if (!state.HasValue)
             {
-                // 端口不可达（游戏关闭）：若之前在对局中，视为退出对局
-                if (_matchState == true)
+                // 端口不可达（游戏关闭）：若之前在对局中，视为退出对局。
+                // 注意只在"真的离开对局"这一跃迁上清状态：map_info 单独不可达时
+                // 每轮都清空已见集合，会让所有消息每轮都被当成新消息（浮窗永不淡出）。
+                bool wasInMatch = _matchState == true;
+                _matchState = null;
+                if (wasInMatch)
                 {
-                    _matchState = null;
+                    ResetSessionState();
                     MatchEnded?.Invoke();
                 }
                 return;
             }
 
-            bool? prev = _matchState;
+            bool wasMatch = _matchState == true;
             _matchState = state.Value;
-            if (prev.HasValue && prev.Value != state.Value)
+            if (_matchState == wasMatch)
             {
-                if (state.Value)
-                {
-                    MatchStarted?.Invoke();
-                }
-                else
-                {
-                    MatchEnded?.Invoke();
-                }
+                return;
+            }
+
+            // 对局边界：游戏聊天消息 ID 会被下一局复用，时间戳也重新计数，
+            // 必须在这里归零水位与已见集合（否则新消息会被误判成"已见过"而漏报）
+            ResetSessionState();
+            if (state.Value)
+            {
+                MatchStarted?.Invoke();
+            }
+            else
+            {
+                MatchEnded?.Invoke();
             }
         }
 
