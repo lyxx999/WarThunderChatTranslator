@@ -16,5 +16,8 @@ namespace WarThunderChatTranslator.Entities
         public int Time { get; set; }
         public string TranslatedMessage { get; set; }
         public string PrettyMessage { get; set; }
+
+        /// <summary>无线电快捷指令（游戏原文带字距 \t，见 ChatService）。不是游戏字段，由本地判定填入。</summary>
+        public bool Radio { get; set; }
     }
 }

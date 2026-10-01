@@ -409,7 +409,7 @@ namespace WarThunderChatTranslator.FloatWindow
             bool systemMsg = string.IsNullOrEmpty(m.Sender) && m.Enemy;
             var senderBrush = systemMsg ? _systemBrush : (m.Enemy ? _enemyBrush : _allyBrush);
             var bodyBrush = systemMsg ? _systemBrush
-                : (RadioMessages.IsRadio(m.Msg) ? senderBrush : _neutralBrush);
+                : (m.Radio || RadioMessages.IsRadio(m.Msg) ? senderBrush : _neutralBrush);
 
             var segments = new List<FloatSegment>();
             if (m.Time > 0)
