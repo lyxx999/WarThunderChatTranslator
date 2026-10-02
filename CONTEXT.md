@@ -179,3 +179,10 @@ Chinese / Traditional Chinese 每行都带 `\t`，English / Russian / Korean / J
 夹取 100-5000ms）：改完立即生效，无需重启侦测线程。
 侦测用全局 `GetAsyncKeyState` 轮询（30ms），无键盘钩子；
 游戏不在前台时不响应，避免干扰其他输入场景。
+
+### 更新源（Update Source）
+「翻译器更新」页查的是**本 fork**：`UpdateHelper.CheckUpdateAsync("lyxx999", "WarThunderChatTranslator")`，
+即 GitHub Releases 的 `releases/latest`（未认证，60 次/小时/IP）。上游 `IShiraiKurokoI` 只作为
+**原项目**出现在关于页与 README 的署名里，不参与更新判定——改回上游会让本修改版的用户拿到别人的安装包。
+「关于」页三处外链分工：维护者 lyxx999 的 Github 主页、项目页面（fork，复制链接按钮也复制它）、
+原项目页面（上游）。版本号比较按四段（Major.Minor.Build.Revision），tag 允许带 `v` 前缀。
