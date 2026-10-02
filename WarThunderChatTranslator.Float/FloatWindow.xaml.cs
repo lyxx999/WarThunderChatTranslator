@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -71,6 +72,15 @@ namespace WarThunderChatTranslator.FloatWindow
         private Brush _enemyBrush;
         private Brush _systemBrush;
         private Brush _neutralBrush;
+        private Brush _coordBrush;
+
+        /// <summary>
+        /// 正文里的网格坐标：左括号 + 1~3 个字母 + 1~3 位数字，后面可以跟一段说明
+        /// （实测 "[d5]"、"[ka1, 高度 600 米]"）。游戏是用 <color=#FF00FF50> 单独包起来的，
+        /// ChatService 剥掉标签后只剩形状，所以这里按形状认。纯字母（[BRUHL]）或纯数字（[1]）不算坐标。
+        /// </summary>
+        private static readonly Regex CoordPattern = new Regex(
+            @"[[［][A-Za-z]{1,3}[0-9]{1,3}[^[\]］]{0,20}[]］]", RegexOptions.Compiled);
 
         [Flags]
         private enum ResizeDir
@@ -105,6 +115,8 @@ namespace WarThunderChatTranslator.FloatWindow
             _enemyBrush = MakeBrush("#FFF25A54");
             _systemBrush = MakeBrush("#FFD4A017");
             _neutralBrush = MakeBrush("#FFB6B6B6");
+            // 游戏给坐标用的标签是 <color=#FF00FF50>（Unity 的 #RRGGBBAA：品红 + 0x50 透明度）
+            _coordBrush = MakeBrush("#50FF00FF");
 
             _displayTimer.Tick += DisplayTimer_Tick;
 
@@ -187,6 +199,7 @@ namespace WarThunderChatTranslator.FloatWindow
                 if (palette.EnemyBrush != null) _enemyBrush = palette.EnemyBrush;
                 if (palette.SystemBrush != null) _systemBrush = palette.SystemBrush;
                 if (palette.NeutralBrush != null) _neutralBrush = palette.NeutralBrush;
+                if (palette.CoordBrush != null) _coordBrush = palette.CoordBrush;
             }
 
             // 透明度只作用于背景：窗口本身保持全不透明，文字永远 100% 不透明
@@ -402,7 +415,8 @@ namespace WarThunderChatTranslator.FloatWindow
         /// <summary>
         /// 拼一行：时间 [频道] 名字: 正文，逐段取色（对齐游戏内聊天）。
         /// 频道与名字始终用发送方阵营色；正文只有无线电快捷指令跟阵营同色，
-        /// 玩家手打的消息正文一律中性色（游戏里那条偏白的 #B6B6B6）。
+        /// 玩家手打的消息正文一律中性色（游戏里那条偏白的 #B6B6B6）；
+        /// 正文里的网格坐标再单独拆一段，用「坐标颜色」（游戏里坐标是被单独包了色标签的）。
         /// </summary>
         private List<FloatSegment> BuildSegments(ChatMessage m)
         {
@@ -425,8 +439,32 @@ namespace WarThunderChatTranslator.FloatWindow
 
             string sender = string.IsNullOrEmpty(m.Sender) ? "系统" : m.Sender;
             segments.Add(MakeSegment($"{sender}: ", senderBrush));
-            segments.Add(MakeSegment(m.TranslatedMessage ?? m.Msg, bodyBrush));
+            AddBodySegments(segments, m.TranslatedMessage ?? m.Msg, bodyBrush);
             return segments;
+        }
+
+        /// <summary>正文按坐标切开：坐标段用坐标色，其余用正文色。</summary>
+        private void AddBodySegments(List<FloatSegment> segments, string body, Brush bodyBrush)
+        {
+            if (string.IsNullOrEmpty(body))
+            {
+                return;
+            }
+
+            int last = 0;
+            foreach (Match match in CoordPattern.Matches(body))
+            {
+                if (match.Index > last)
+                {
+                    segments.Add(MakeSegment(body.Substring(last, match.Index - last), bodyBrush));
+                }
+                segments.Add(MakeSegment(match.Value, _coordBrush));
+                last = match.Index + match.Length;
+            }
+            if (last < body.Length)
+            {
+                segments.Add(MakeSegment(body.Substring(last), bodyBrush));
+            }
         }
 
         private static FloatSegment MakeSegment(string text, Brush brush) =>

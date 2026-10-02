@@ -22,6 +22,7 @@ namespace WarThunderChatTranslator.Pages
         public Brush EnemyPreviewBrush { get; set; }
         public Brush SystemPreviewBrush { get; set; }
         public Brush NeutralPreviewBrush { get; set; }
+        public Brush CoordPreviewBrush { get; set; }
         public Brush OutlinePreviewBrush { get; set; }
 
         /// <summary>描边滑块与数字输入框互相回写，用此标记阻止事件成环。</summary>
@@ -50,6 +51,7 @@ namespace WarThunderChatTranslator.Pages
             EnemyPreviewBrush = new SolidColorBrush(GetFontColor("EnemyFontColor"));
             SystemPreviewBrush = new SolidColorBrush(GetFontColor("SystemFontColor"));
             NeutralPreviewBrush = new SolidColorBrush(GetFontColor("NeutralFontColor"));
+            CoordPreviewBrush = new SolidColorBrush(GetFontColor("CoordFontColor"));
             OutlinePreviewBrush = new SolidColorBrush(GetFontColor("FloatWindow_OutlineColor"));
         }
 
@@ -307,6 +309,12 @@ namespace WarThunderChatTranslator.Pages
             NeutralPreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
         }
 
+        private void Coord_Button_Click(object sender, RoutedEventArgs e)
+        {
+            OnColorButtonClick("CoordFontColor", CoordPreviewBrush, CoordColorPreview);
+            CoordPreviewBrush = new SolidColorBrush(FontColor); // Update the reference after the async operation
+        }
+
         private void Outline_Button_Click(object sender, RoutedEventArgs e)
         {
             OnColorButtonClick("FloatWindow_OutlineColor", OutlinePreviewBrush, OutlineColorPreview);
@@ -326,6 +334,9 @@ namespace WarThunderChatTranslator.Pages
 
         private void Neutral_Reset_Click(object sender, RoutedEventArgs e) =>
             ResetColor("NeutralFontColor", "#FFB6B6B6", NeutralColorPreview, b => NeutralPreviewBrush = b);
+
+        private void Coord_Reset_Click(object sender, RoutedEventArgs e) =>
+            ResetColor("CoordFontColor", "#50FF00FF", CoordColorPreview, b => CoordPreviewBrush = b);
 
         private void OutlineColor_Reset_Click(object sender, RoutedEventArgs e) =>
             ResetColor("FloatWindow_OutlineColor", "#FFFFFFFF", OutlineColorPreview, b => OutlinePreviewBrush = b);

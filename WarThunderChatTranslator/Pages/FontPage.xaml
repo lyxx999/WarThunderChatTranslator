@@ -201,6 +201,29 @@
                             </labs:SettingsCard>
                             <labs:SettingsCard
                                 MaxWidth="2000"
+                                Header="坐标颜色"
+                                Description="消息里网格坐标（如 [b2]、[ka1, 高度 600 米]）的颜色（浮窗用）">
+                                <labs:SettingsCard.HeaderIcon>
+                                    <FontIcon Glyph="&#xe8d3;" />
+                                </labs:SettingsCard.HeaderIcon>
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle
+                                        x:Name="CoordColorPreview"
+                                        Width="30"
+                                        Height="30"
+                                        Margin="0,0,10,0"
+                                        Fill="{x:Bind CoordPreviewBrush, Mode=TwoWay}" />
+                                    <Button Click="Coord_Button_Click" Content="选择颜色" />
+                                    <Button
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Click="Coord_Reset_Click"
+                                        Content="恢复默认"
+                                        ToolTipService.ToolTip="恢复为 #50FF00FF（游戏内坐标色：品红 + 31% 不透明度）" />
+                                </StackPanel>
+                            </labs:SettingsCard>
+                            <labs:SettingsCard
+                                MaxWidth="2000"
                                 Header="文字描边"
                                 Description="为浮窗文字添加描边，在复杂游戏画面上更易读">
                                 <labs:SettingsCard.HeaderIcon>

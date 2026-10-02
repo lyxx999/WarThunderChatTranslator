@@ -114,6 +114,7 @@ namespace WarThunderChatTranslator
                 { "EnemyFontColor", "#FFF25A54" },
                 { "SystemFontColor", "#FFD4A017" },
                 { "NeutralFontColor", "#FFB6B6B6" },
+                { "CoordFontColor", "#50FF00FF" },
                 { "Theme", "Default" },
                 { "BackgroundCSS", "background-color: #f4f4f4;" },
                 { "CustomAI_BaseUrl", "" },

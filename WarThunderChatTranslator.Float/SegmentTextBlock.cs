@@ -13,7 +13,7 @@ namespace WarThunderChatTranslator.FloatWindow
         public Brush Brush { get; set; }
     }
 
-    /// <summary>浮窗调色板，取自「字体和样式」页的四色设置。</summary>
+    /// <summary>浮窗调色板，取自「字体和样式」页的五色设置。</summary>
     public class FloatPalette
     {
         public Brush AllyBrush { get; set; }
@@ -22,6 +22,9 @@ namespace WarThunderChatTranslator.FloatWindow
 
         /// <summary>中性色：时间戳、以及敌军消息的正文。</summary>
         public Brush NeutralBrush { get; set; }
+
+        /// <summary>坐标色：正文里的网格坐标（[b2]、[ka1, 高度 600 米]）。</summary>
+        public Brush CoordBrush { get; set; }
     }
 
     /// <summary>

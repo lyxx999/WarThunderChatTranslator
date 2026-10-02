@@ -529,6 +529,7 @@ namespace WarThunderChatTranslator.FloatWindow
                     EnemyBrush = ParseBrush(ApplicationConfig.GetSettings("EnemyFontColor"), "#FFF25A54"),
                     SystemBrush = ParseBrush(ApplicationConfig.GetSettings("SystemFontColor"), "#FFD4A017"),
                     NeutralBrush = ParseBrush(ApplicationConfig.GetSettings("NeutralFontColor"), "#FFB6B6B6"),
+                    CoordBrush = ParseBrush(ApplicationConfig.GetSettings("CoordFontColor"), "#50FF00FF"),
                 },
                 _outlineEnabled,
                 _outlineColor,
