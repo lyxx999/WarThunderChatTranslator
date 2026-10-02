@@ -10,11 +10,13 @@
 
 微软生草机belike：
 
-![](doc/1.png)
+![游戏内效果：左上是悬浮翻译窗，左下是游戏自带聊天窗](https://github.com/user-attachments/assets/e1b94488-a1f8-423c-8afa-a73a68a46f26)
 
-![](doc/2.png)
+![设置页面](https://github.com/user-attachments/assets/a78aecc2-fe0a-4464-bb68-c4650f0a4835)
 
-![](doc/3.png)
+![设置页面](https://github.com/user-attachments/assets/ce570fd4-e3c7-4d8e-a3fb-fe879863658c)
+
+![设置页面](https://github.com/user-attachments/assets/0380faef-23b1-4bcd-94c1-b8b89d1c0530)
 
 ## 安装 / 升级
 
