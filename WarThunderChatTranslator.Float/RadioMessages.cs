@@ -6,45 +6,74 @@ namespace WarThunderChatTranslator.FloatWindow
 {
     /// <summary>
     /// 无线电消息（游戏内按 T 键呼出的快捷指令）识别的**兜底**路径。
-    /// 主路径是 ChatService 按原文里的字距 \t 判定（游戏给本地化文案插字距、玩家手打的文字没有），
-    /// 与客户端语言无关。这里只保留文案表，用于万一没带 \t 的客户端文案。
-    /// 快捷指令由发送方客户端本地化后发出，同一局里会中英混杂，所以两张表都要有。
+    /// 主路径是 ChatService 按原文里的字距 \t 判定，但游戏只给中文插字距
+    /// （lang/ui.csv 实测 Chinese / Traditional Chinese 每行都有 \t，English / Russian / Korean 等一列都没有），
+    /// 所以非中文客户端发出的指令只能靠文案认出来。
     /// 命中 → 正文用发送方阵营色（与游戏内一致）；未命中（玩家手打）→ 正文用中性色。
-    /// 漏掉的指令往 Phrases 里补即可，误判只影响颜色，不影响内容。
+    /// 误判只影响颜色、不影响内容，所以带目标名的模板宁可放宽前缀也不要漏。
     /// </summary>
     public static class RadioMessages
     {
+        /// <summary>
+        /// 取自游戏本地化文件 lang/ui.csv 的 voice_message_*（英文 + 简体中文两列；跳过
+        /// voice_message_category/* 这些菜单标题和纯占位片段），并已按 Normalize 同一规则预处理，
+        /// 所以这里的比对是直接相等。要支持别的客户端语言，从同一批行的对应列再取一遍即可。
+        /// </summary>
         private static readonly HashSet<string> Phrases = new HashSet<string>(StringComparer.Ordinal)
         {
-            // 客户端为英文时游戏发出的原文
-            "attack enemy base", "attack enemy troops", "attack a point", "attack b point",
-            "attack c point", "attack d point", "attack designated target",
-            "cover our troops", "cover our base", "cover me",
-            "defend a point", "defend b point", "defend c point", "defend d point", "defend our base",
-            "need support", "need help", "request support", "request bombing", "request artillery",
-            "request airstrike", "request reconnaissance", "request repair", "need repairs",
-            "affirmative", "roger", "negative", "sorry", "thank you", "thanks", "well done",
-            "follow me", "returning to base", "on my way", "coming for help",
-            "enemy position", "enemy spotted", "out of ammo", "low fuel", "out of fuel",
-            "repairing", "attention tactical map", "attention at this position",
-            "attention this coordinate", "preparing to land", "landing",
-
-            // 客户端为中文时游戏发出的原文（含截图实测到的写法）
-            "进攻敌方基地", "进攻敌军部队", "进攻a点", "进攻b点", "进攻c点", "进攻d点", "攻击指定目标",
-            "掩护我方部队", "掩护我方基地", "掩护我",
-            "防守a点", "防守b点", "防守c点", "防守d点", "防守我方基地",
-            "需要支援", "需要帮助", "请求支援", "请求轰炸", "请求炮击", "请求空袭", "请求侦察", "需要维修",
-            "收到", "同意", "明白", "否定", "拒绝", "抱歉", "对不起", "谢谢你", "多谢", "谢谢", "干得漂亮",
-            "跟着我", "返回基地", "正在返回基地", "马上到", "正在赶来",
-            "敌人位置", "发现敌人", "弹药耗尽", "燃料不足", "燃油不足", "正在维修",
-            "注意战术地图", "注意该坐标位置", "注意当前标识区域", "准备着陆", "正在着陆"
+            "no", "不行", "反对", "同意", "多谢", "好的", "感谢", "抱歉", "收到", "漂亮", "赞成", "yes", "原谅我", "太棒了", "好极了", "对不起",
+            "干得好", "我拒绝", "掩护我", "装填中", "请原谅", "谢谢你", "跟我来", "跟我走", "跟着我", "onme", "准备着陆", "守卫基地", "正在修理", "正在着陆",
+            "正在维修", "正在装填", "正在降落", "注意后面", "空袭警报", "绝对不行", "请求掩护", "请求支援", "跟我行动", "进攻a点", "进攻b点", "进攻c点", "进攻d点",
+            "防守a点", "防守b点", "防守c点", "防守d点", "防守基地", "防御基地", "需要支援", "需要维修", "非常感谢", "bravo", "never", "sorry",
+            "就在你身后", "iagree", "thanks", "抱歉失手误伤", "摧毁敌军基地", "摧毁敌方基地", "攻击敌军基地", "攻击敌军部队", "攻击敌方基地", "攻击敌方部队",
+            "正在前往基地", "正在返回基地", "正在返回机场", "注意战术地图", "消灭敌军部队", "消灭敌方部队", "误伤实在抱歉", "请求空中支援", "请求航空侦察", "awesome",
+            "coverme", "imsorry", "irefuse", "对不起误伤到你", "注意该坐标位置", "airalert", "excuseme", "followme", "gramercy",
+            "lookback", "negative", "thankyou", "welldone", "注意当前标识区域", "请求指示空袭目标", "behindyou", "excellent",
+            "guideonme", "needcover", "reloading", "repairing", "rogerthat", "为基地提供空中掩护", "检查你的六点钟方向", "needbackup",
+            "不小心误伤了你对不起", "正在从无人机发送坐标", "affirmative", "gettingdown", "moveafterme", "checkyoursix", "coverthebase",
+            "无人机操控员传输目标坐标", "无人机操控员传输目标方位", "defendourbase", "defendthebase", "ibegyourpardon", "attackenemybase",
+            "attacktheapoint", "attackthebpoint", "attackthecpoint", "attackthedpoint", "defendtheapoint",
+            "defendthebpoint", "defendthecpoint", "defendthedpoint", "somebodycoverme", "destroyenemybase",
+            "headingtothebase", "sorryforteamkill", "thankyouverymuch", "attackenemytroops", "attackhostilebase",
+            "attentiontothemap", "leadingforlanding", "requestingrepairs", "destroyenemytroops",
+            "destroyhostilebase", "returningtothebase", "无人机操控员在该坐标发现敌方单位活动", "attackhostiletroops",
+            "destroyhostiletroops", "returningtotheairfield", "provideaircoverforourbase",
+            "requestingaviationsupport", "requestingairreconnaissance", "sendingcoordinatesfromadrone",
+            "requestingatargetforanairattack", "attentiontothedesignatedgridzone",
+            "attentiontothedesignatedgridsquare", "uavoperatortransmitstargetcoordinates",
+            "uavoperatornoticedactivityinthedesignatedgridsquare",
         };
 
-        /// <summary>带目标/点位参数的指令：前缀命中即可（点位后缀会被剥掉，但游戏可能拼进正文）。</summary>
-        private static readonly string[] Prefixes =
+        /// <summary>
+        /// 带 %s / %d 占位的模板（"攻击 %s！"、"%s，下次注意！"）：拆成前缀与后缀，空的一侧不检查。
+        /// 最后两条来自 "空袭警报！" + voice_message_air_suffix（" 方位 %d，高度约 %d"）的拼接，
+        /// 基础句只能当前缀用（实测原文 "空\t袭\t警\t报！ 方\t位 230，\t高\t度\t约 500"）。
+        /// </summary>
+        private static readonly (string Prefix, string Suffix)[] Patterns =
         {
-            "i'm attacking", "im attacking", "attacking", "正在攻击", "攻击目标", "enemy at", "敌人在",
-            "空袭警报", "请求指示"   // 后面跟着方位/高度/目标，实测："空袭警报！ 方位 0，高度约 2000"
+            ( "", "下次注意" ),
+            ( "", "下次看着点" ),
+            ( "", "我接受你的道歉" ),
+            ( "", "收到" ),
+            ( "assaulting", "" ),
+            ( "attack", "" ),
+            ( "destroy", "" ),
+            ( "eliminate", "" ),
+            ( "engagingwith", "" ),
+            ( "iacceptapologyforteamkillfrom", "" ),
+            ( "imattacking", "" ),
+            ( "someoneattack", "" ),
+            ( "startingcombatwith", "" ),
+            ( "干掉", "" ),
+            ( "快去做掉", "" ),
+            ( "我正在攻击", "" ),
+            ( "攻击", "" ),
+            ( "正准备攻击", "" ),
+            ( "正同", "接战" ),
+            ( "正在攻击", "" ),
+            ( "消灭", "" ),
+            ( "airalert", "" ),
+            ( "空袭警报", "" ),
         };
 
         public static bool IsRadio(string msg)
@@ -58,9 +87,10 @@ namespace WarThunderChatTranslator.FloatWindow
             {
                 return true;
             }
-            foreach (var prefix in Prefixes)
+            foreach (var pattern in Patterns)
             {
-                if (key.StartsWith(prefix, StringComparison.Ordinal))
+                if (key.StartsWith(pattern.Prefix, StringComparison.Ordinal) &&
+                    (pattern.Suffix.Length == 0 || key.EndsWith(pattern.Suffix, StringComparison.Ordinal)))
                 {
                     return true;
                 }
@@ -68,7 +98,10 @@ namespace WarThunderChatTranslator.FloatWindow
             return false;
         }
 
-        /// <summary>去掉点位后缀（[a1]、[ka1, 高度 600 米]）、标点与空白，英文转小写。</summary>
+        /// <summary>
+        /// 去掉点位后缀（[a1]、[ka1, 高度 600 米]）、标点与空白，英文转小写。
+        /// Phrases / Patterns 里的文案也是按这套规则预处理过的，两边必须一致。
+        /// </summary>
         private static string Normalize(string msg)
         {
             if (string.IsNullOrEmpty(msg))

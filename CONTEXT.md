@@ -122,9 +122,14 @@
 `gamechat` 没有"这条是无线电消息"的标志字段，但**原文里的字距 `\t` 就是标志**：游戏给本地化文案
 逐字符插 `\t`（实测 `"注\t意\t战\t术\t地\t图！<color=#FF00FF50> [d5]</color>"`、`"好\t极\t了！"`），
 玩家手打的文字不含 `\t`（实测 `"thx for the steal"`）。`ChatService` 在剥离 `\t` **之前**据此填
-`ChatMessage.Radio`，与客户端语言无关。
-拉丁字母不参与插字距（`"防\t守 B 点！"`），所以英文客户端的指令可能不带 `\t`，
-`RadioMessages.IsRadio` 的文案表保留作兜底。
+`ChatMessage.Radio`。
+但**插字距只作用于中文**：游戏本地化文件 `lang/ui.csv` 的 `voice_message_*` 行里，
+Chinese / Traditional Chinese 每行都带 `\t`，English / Russian / Korean / Japanese 等列一个都没有
+（所以英文客户端的指令不带 `\t`，`"防\t守 B 点！"` 里的 B 也不插）。
+于是非中文客户端只能靠 `RadioMessages.IsRadio` 的文案表认：表取自 `ui.csv` 那批行的
+英文 + 简体中文两列（跳过 `voice_message_category/*` 菜单标题与纯占位片段），
+带 `%s` / `%d` 的模板拆成前缀 + 后缀匹配，"空袭警报 + `voice_message_air_suffix`（方位/高度）"
+这种拼接句用基础句做前缀。要加别的客户端语言就从同一批行的对应列再取一遍。
 命中 → 正文与发送方阵营同色；未命中（玩家手打）→ 正文用中性色。与游戏内一致。
 
 ### 分段配色（Segment Colors）

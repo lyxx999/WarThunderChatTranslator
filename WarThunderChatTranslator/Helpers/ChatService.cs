@@ -61,7 +61,9 @@ namespace WarThunderChatTranslator.Helpers
             {
                 // 无线电快捷指令取自游戏的本地化文案表，游戏会在每个字符之间插入 \t 做字距
                 // （实测："注\t意\t战\t术\t地\t图！<color=#FF00FF50> [d5]</color>"），玩家手打的文字里没有 \t。
-                // 这个信号与客户端语言无关，比按文案匹配可靠得多，所以必须在剥离 \t 之前判定。
+                // 但插字距只作用于中日文客户端（lang/ui.csv 里 Chinese / Traditional Chinese 每行都有 \t，
+                // English / Russian / Korean 等一列都没有），所以这里覆盖不全，剩下的靠 RadioMessages 按文案兜底。
+                // 判定必须在剥离 \t 之前做。
                 message.Radio = (message.Msg ?? string.Empty).Contains('\t');
 
                 message.Msg = Regex.Replace(message.Msg.Replace("\t", ""), ColorPattern, match => match.Groups[2].Value);
