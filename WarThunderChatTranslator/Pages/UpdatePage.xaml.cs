@@ -42,8 +42,9 @@ namespace WarThunderChatTranslator.Pages
 
             try
             {
-                var updateInfo = await UpdateHelper.CheckUpdateAsync("IShiraiKurokoI", "WarThunderChatTranslator");
-                var sizeString = ConvertSizeToString(updateInfo.Assets[0].Size);
+                // 更新源自本 fork（不是上游 IShiraiKurokoI/WarThunderChatTranslator）
+                var updateInfo = await UpdateHelper.CheckUpdateAsync("lyxx999", "WarThunderChatTranslator");
+                var sizeString = updateInfo.Assets.Count > 0 ? ConvertSizeToString(updateInfo.Assets[0].Size) : "未知";
 
                 if (updateInfo.IsExistNewVersion)
                 {
@@ -85,7 +86,7 @@ namespace WarThunderChatTranslator.Pages
                 PrimaryButtonText = "前往更新",
                 CloseButtonText = "暂不更新",
                 DefaultButton = ContentDialogButton.Primary,
-                Content = $"检测到新版本：V{version}\n发布时间：{publishedAt}\n大小：{sizeString}"
+                Content = $"检测到新版本：V{(version ?? string.Empty).TrimStart('v', 'V')}\n发布时间：{publishedAt}\n大小：{sizeString}"
             };
 
             var result = await dialog.ShowAsync();

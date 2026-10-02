@@ -47,7 +47,7 @@
                                             Margin="0,2,0,0"
                                             Content="发行说明"
                                             FontWeight="SemiBold"
-                                            NavigateUri="https://github.com/IShiraiKurokoI/WarThunderChatTranslator/releases" />
+                                            NavigateUri="https://github.com/lyxx999/WarThunderChatTranslator/releases" />
                                     </StackPanel>
                                 </controls:SettingsCard.Description>
                                 <StackPanel Orientation="Horizontal" Spacing="18">
