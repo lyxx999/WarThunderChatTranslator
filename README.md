@@ -4,12 +4,17 @@
 
 微软生草机belike：
 
-![](doc/1.png)
+![](<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/e1b94488-a1f8-423c-8afa-a73a68a46f26" />
+)
 
-![](doc/2.png)
+![](<img width="1384" height="792" alt="image" src="https://github.com/user-attachments/assets/a78aecc2-fe0a-4464-bb68-c4650f0a4835" />
+)
 
-![](doc/3.png)
+![](<img width="1384" height="792" alt="image" src="https://github.com/user-attachments/assets/ce570fd4-e3c7-4d8e-a3fb-fe879863658c" />
+)
 
+![](<img width="1384" height="792" alt="image" src="https://github.com/user-attachments/assets/0380faef-23b1-4bcd-94c1-b8b89d1c0530" />
+)
 ## Todos
 
 - [x] 重构至翻译界面WebUI
